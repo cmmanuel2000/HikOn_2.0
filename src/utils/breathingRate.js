@@ -2,20 +2,24 @@
  * Breathing Rate Calculator
  * 
  * Calculates breathing rate from accelerometer data stored in the accel_values table.
- * Uses a calibrated zero-crossing algorithm that only works when the patient is at rest.
+ * Uses a dual-axis calibrated zero-crossing algorithm for both RESTING and ACTIVE states.
  * 
  * Calibrated against manual breath counts:
- *   Princess: 31 BPM -> predicted 30.6
- *   Luis:     22 BPM -> predicted 22.1
- *   Tyler:    33 BPM -> predicted 33.3
+ *   Dwayne:    Rest 21, Active 27
+ *   Kim:       Rest 22, Active 29
+ *   Miguelito: Rest 32, Active 29
  */
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
-// Calibration constants (derived from 3-patient linear regression)
-const ZC_SLOPE = -18.08;
-const ZC_INTERCEPT = 78.50;
+// Calibration constants for RESTING state (Using Y-Axis)
+const REST_ZC_SLOPE = 9.21;
+const REST_ZC_INTERCEPT = 0.97;
+
+// Calibration constants for ACTIVE state (Using X-Axis)
+const ACTIVE_ZC_SLOPE = 3.5;
+const ACTIVE_ZC_INTERCEPT = 22.0;
 
 // Rest detection threshold: accel_magnitude std dev must be below this
 const REST_THRESHOLD = 0.05;
@@ -93,41 +97,38 @@ export async function calculateBreathingRate() {
     // Reverse so oldest is first (natural time order)
     rows.reverse();
 
-    // Sliding window: find the most recent rest window
+    // We now support both Rest and Active patterns, so we just take the most recent complete window.
     let bestBPM = null;
     let patientAtRest = false;
 
-    for (let i = rows.length - ANALYSIS_WINDOW; i >= 0; i--) {
-      const window = rows.slice(i, i + ANALYSIS_WINDOW);
-      const magnitudes = window.map(r => r.accel_magnitude);
+    // Most recent window is at the end because of rows.reverse()
+    const window = rows.slice(rows.length - ANALYSIS_WINDOW, rows.length);
+    const magnitudes = window.map(r => r.accel_magnitude);
 
-      if (isAtRest(magnitudes)) {
-        patientAtRest = true;
+    patientAtRest = isAtRest(magnitudes);
+    let bpm = 0;
 
-        // Use accel_z for zero-crossing analysis
-        const zValues = window.map(r => r.accel_z);
-        const zeroCrossings = countZeroCrossings(zValues);
-
-        // Apply calibrated formula
-        const bpm = ZC_SLOPE * zeroCrossings + ZC_INTERCEPT;
-
-        // Clamp to physiological range (children: 12-60 BPM)
-        bestBPM = Math.max(12, Math.min(60, Math.round(bpm)));
-
-        console.log(`[BreathingRate] Rest detected. ZC=${zeroCrossings}, BPM=${bestBPM}`);
-        break; // Use most recent rest window
-      }
+    if (patientAtRest) {
+      // Resting: Use Y-axis for zero-crossing analysis
+      const yValues = window.map(r => r.accel_y);
+      const zeroCrossings = countZeroCrossings(yValues);
+      bpm = REST_ZC_SLOPE * zeroCrossings + REST_ZC_INTERCEPT;
+      console.log(`[BreathingRate] Rest detected. ZC_Y=${zeroCrossings}, Calculated BPM=${bpm}`);
+    } else {
+      // Active: Use X-axis for zero-crossing analysis
+      const xValues = window.map(r => r.accel_x);
+      const zeroCrossings = countZeroCrossings(xValues);
+      bpm = ACTIVE_ZC_SLOPE * zeroCrossings + ACTIVE_ZC_INTERCEPT;
+      console.log(`[BreathingRate] Active motion detected. ZC_X=${zeroCrossings}, Calculated BPM=${bpm}`);
     }
 
-    if (!patientAtRest) {
-      console.log('[BreathingRate] Patient is moving - no reliable reading');
-      return { breathingRate: null, isAtRest: false, confidence: 'moving' };
-    }
+    // Clamp to physiological range (children: 12-60 BPM)
+    bestBPM = Math.max(12, Math.min(60, Math.round(bpm)));
 
     return {
       breathingRate: bestBPM,
-      isAtRest: true,
-      confidence: 'measured'
+      isAtRest: patientAtRest,
+      confidence: patientAtRest ? 'measured' : 'estimated'
     };
   } catch (error) {
     console.error('[BreathingRate] Error:', error);

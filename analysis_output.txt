@@ -1,0 +1,21 @@
+
+--- Dwayne ---
+RESTING (Target 21 BPM): ZC_X=2.65, ZC_Y=2.38, ZC_Z=2.62
+ACTIVE (Target 27 BPM): ZC_X=1.35, ZC_Y=2.10, ZC_Z=1.15
+
+--- Kim ---
+RESTING (Target 22 BPM): ZC_X=2.53, ZC_Y=2.09, ZC_Z=2.35
+ACTIVE (Target 29 BPM): ZC_X=1.97, ZC_Y=2.00, ZC_Z=1.90
+
+--- Miguelito ---
+RESTING (Target 32 BPM): ZC_X=2.92, ZC_Y=3.37, ZC_Z=3.32
+ACTIVE (Target 29 BPM): ZC_X=1.74, ZC_Y=1.70, ZC_Z=1.19
+
+
+Summary mappings (BPM, ZC_X, ZC_Y, ZC_Z):
+21 BPM -> Z_X: 2.65, Z_Y: 2.38, Z_Z: 2.62
+27 BPM -> Z_X: 1.35, Z_Y: 2.10, Z_Z: 1.15
+22 BPM -> Z_X: 2.53, Z_Y: 2.09, Z_Z: 2.35
+29 BPM -> Z_X: 1.97, Z_Y: 2.00, Z_Z: 1.90
+32 BPM -> Z_X: 2.92, Z_Y: 3.37, Z_Z: 3.32
+29 BPM -> Z_X: 1.74, Z_Y: 1.70, Z_Z: 1.19
