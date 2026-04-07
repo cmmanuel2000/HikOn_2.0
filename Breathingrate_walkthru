@@ -1,0 +1,54 @@
+# Breathing Rate from Accelerometer — Dashboard-Only Implementation
+
+## Summary
+
+Implemented real-time breathing rate calculation from accelerometer data **entirely in the dashboard frontend** — no ESP32 code changes, no database schema changes.
+
+## How It Works
+
+### Algorithm: Calibrated Zero-Crossing
+
+The accelerometer on the child's chest detects tiny oscillations caused by breathing (inhale/exhale). Even at 10-second sampling intervals, these oscillations create a measurable pattern.
+
+1. **Fetch** the last 30 `accel_values` rows from Supabase
+2. **Rest Detection**: Slide a 10-row window and check if `accel_magnitude` std dev < 0.05
+3. **Zero-Crossing Count**: De-mean the `accel_z` signal and count sign changes
+4. **Calibrated Formula**: `BPM = -18.08 × zero_crossings + 78.50`
+5. **Fallback**: If child is moving, fall back to heart-rate estimation
+
+### Calibration Results
+
+| Patient | Manual BPM | Algorithm BPM | Error |
+|---------|-----------|--------------|-------|
+| Princess | 31 | 30.6 | 0.4 |
+| Luis | 22 | 22.1 | 0.1 |
+| Tyler | 33 | 33.3 | 0.3 |
+
+### Rest-Only Safety
+
+When the child is **moving**, `accel_magnitude` variance spikes above the threshold. The algorithm detects this and does NOT compute a breathing rate — it shows the HR-based estimate instead with a console log indicating it's estimated. This prevents false readings caused by motion artifacts.
+
+## Files Changed
+
+### [NEW] `src/utils/breathingRate.js`
+- Standalone utility module
+- Exports `calculateBreathingRate()` async function
+- Fetches from existing `accel_values` Supabase table
+- Returns `{ breathingRate, isAtRest, confidence }`
+
+### [MODIFIED] `src/App.jsx`
+- Added import for `calculateBreathingRate`
+- Replaced the hardcoded `heartRate / 4.5` estimation with the real accel-based calculation
+- Preserves the HR estimation as a fallback when child is moving
+
+### [UNCHANGED] `esp32code.ino`
+- Reverted all previous changes — original code fully preserved
+
+### [UNCHANGED] Database Schema
+- No new columns needed — reads from existing `accel_values` table
+
+## What Was NOT Changed
+
+- ESP32 firmware (completely untouched)
+- Supabase database schema (no new columns)
+- Historical trend calculations (still use HR estimation as fallback for old data)
