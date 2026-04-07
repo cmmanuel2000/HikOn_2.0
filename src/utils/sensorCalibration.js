@@ -12,12 +12,11 @@
  */
 
 // --- SpO2 Calibration ---
-// Average offset derived from 3-patient comparison:
-//   Luis:     finger=99%, chest=89.0%, gap=+10.0
-//   Tyler:    finger=98%, chest=87.9%, gap=+10.1
-//   Princess: finger=99%, chest=87.7%, gap=+11.3
-//   Average gap: +10.17%
-const SPO2_CHEST_OFFSET = 10.17;
+// Derived from patient testing comparison mapping raw chest MAX30102 values to finger ground truths:
+//   Test 1: finger=98%, chest=90.1%, gap=+7.9%
+//   Test 2: finger=98%, chest=89.8%, gap=+8.2%
+//   Average Universal Offset: +8.0%
+const SPO2_CHEST_OFFSET = 8.0;
 
 /**
  * Calibrate a raw chest SpO2 reading to match finger pulse oximeter values.

@@ -310,7 +310,7 @@ const App = () => {
       const spo2 = calibrateSpO2(rawSpo2) || 0;
       const heartRate = calibrateHeartRate(rawHeartRate) || 0;
       
-      console.log(`[Calibration] SpO2: ${rawSpo2.toFixed(1)} -> ${spo2} (+10.17 offset) | HR: ${rawHeartRate.toFixed(0)} -> ${heartRate} (median filter)`);
+      console.log(`[Calibration] SpO2: ${rawSpo2.toFixed(1)} -> ${spo2} (+8.0 offset) | HR: ${rawHeartRate.toFixed(0)} -> ${heartRate} (median filter)`);
 
       const brResult = await calculateBreathingRate();
       let breathingRate;
