@@ -192,49 +192,6 @@ const App = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
-  // Bronchodilator Reversibility State
-  const [medicationGivenAt, setMedicationGivenAt] = useState(null);
-  const [medicationTimer, setMedicationTimer] = useState(0);
-  const [treatmentStatus, setTreatmentStatus] = useState(null); // 'monitoring', 'resolved', 'escalated'
-  
-  // Medication Observation Window Logic
-  useEffect(() => {
-    if (!medicationGivenAt || treatmentStatus === 'resolved' || treatmentStatus === 'escalated') return;
-
-    const interval = setInterval(() => {
-      const elapsedMs = Date.now() - medicationGivenAt;
-      const elapsedMins = elapsedMs / 60000;
-      setMedicationTimer(Math.floor(elapsedMs / 1000)); 
-
-      const currentRisk = sensors.physioRisk;
-      if (elapsedMins >= 20 && (currentRisk === 'high' || currentRisk === 'medium')) {
-        setTreatmentStatus('escalated');
-        setAlertMsg("CRITICAL WARNING: Child is not responding to medication (20min elapsed). Seek immediate medical assistance.");
-        setIsAlertVisible(true);
-      } else if (elapsedMins > 0.5 && currentRisk === 'safe') { // require at least 30 seconds to confirm 'safe' transition
-        setTreatmentStatus('resolved');
-        setAlertMsg("Symptoms resolved. Treatment successful.");
-        setIsAlertVisible(true);
-        setTimeout(() => setIsAlertVisible(false), 5000);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [medicationGivenAt, sensors.physioRisk, treatmentStatus]);
-
-  const handleLogMedication = () => {
-    setMedicationGivenAt(Date.now());
-    setTreatmentStatus('monitoring');
-  };
-
-  const handleResetMedication = () => {
-    setMedicationGivenAt(null);
-    setMedicationTimer(0);
-    setTreatmentStatus(null);
-    setIsAlertVisible(false);
-  };
-
-  
   // 24-hour SpO2 trend data for continuity chart (real Supabase data)
   const [vitalsTrend, setVitalsTrend] = useState([]);
   
@@ -264,6 +221,48 @@ const App = () => {
     deletePatient,
     updateActivePatientInSupabase
   } = patientManagement;
+
+  // Bronchodilator Reversibility State
+  const [medicationGivenAt, setMedicationGivenAt] = useState(null);
+  const [medicationTimer, setMedicationTimer] = useState(0);
+  const [treatmentStatus, setTreatmentStatus] = useState(null); // 'monitoring', 'resolved', 'escalated'
+  
+  // Medication Observation Window Logic
+  useEffect(() => {
+    if (!medicationGivenAt || treatmentStatus === 'resolved' || treatmentStatus === 'escalated') return;
+
+    const interval = setInterval(() => {
+      const elapsedMs = Date.now() - medicationGivenAt;
+      const elapsedMins = elapsedMs / 60000;
+      setMedicationTimer(Math.floor(elapsedMs / 1000)); 
+
+      const currentRisk = sensors?.physioRisk || 'safe';
+      if (elapsedMins >= 20 && (currentRisk === 'high' || currentRisk === 'medium')) {
+        setTreatmentStatus('escalated');
+        setAlertMsg("CRITICAL WARNING: Child is not responding to medication (20min elapsed). Seek immediate medical assistance.");
+        setIsAlertVisible(true);
+      } else if (elapsedMins > 0.5 && currentRisk === 'safe') { // require at least 30 seconds to confirm 'safe' transition
+        setTreatmentStatus('resolved');
+        setAlertMsg("Symptoms resolved. Treatment successful.");
+        setIsAlertVisible(true);
+        setTimeout(() => setIsAlertVisible(false), 5000);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [medicationGivenAt, sensors?.physioRisk, treatmentStatus]);
+
+  const handleLogMedication = () => {
+    setMedicationGivenAt(Date.now());
+    setTreatmentStatus('monitoring');
+  };
+
+  const handleResetMedication = () => {
+    setMedicationGivenAt(null);
+    setMedicationTimer(0);
+    setTreatmentStatus(null);
+    setIsAlertVisible(false);
+  };
 
   // Fetch latest sensor data from Supabase
   const fetchLatestSensorData = useCallback(async () => {
