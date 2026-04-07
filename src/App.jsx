@@ -191,6 +191,7 @@ const App = () => {
   const [timeRange, setTimeRange] = useState('7d'); // '7d', '30d', '90d'
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTestingMode, setIsTestingMode] = useState(false);
 
   // 24-hour SpO2 trend data for continuity chart (real Supabase data)
   const [vitalsTrend, setVitalsTrend] = useState([]);
@@ -266,6 +267,7 @@ const App = () => {
 
   // Fetch latest sensor data from Supabase
   const fetchLatestSensorData = useCallback(async () => {
+    if (isTestingMode) return;
     try {
       const patient = patients.find(p => p.id === selectedPatientId);
       if (!patient) return;
@@ -388,7 +390,7 @@ const App = () => {
     } catch (error) {
       console.error('❌ Error fetching sensor data:', error);
     }
-  }, [selectedPatientId, patients]);
+  }, [selectedPatientId, patients, isTestingMode]);
 
   // Stamp all NULL rows to the selected patient immediately (called by Record button)
   const recordForPatient = useCallback(async () => {
@@ -966,7 +968,7 @@ const App = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <button 
                         onClick={() => {
-                          
+                          setIsTestingMode(true);
                           setSensors(prev => {
                             const newWheezeCount = prev.wheezeCount + 1;
                             const newCoughCount = prev.coughCount + 3;
@@ -996,7 +998,7 @@ const App = () => {
                       
                       <button 
                         onClick={() => {
-                          
+                          setIsTestingMode(true);
                           setSensors(prev => {
                             const newCoughCount = prev.coughCount + 1;
                             const fusionResult = hybridFusion(prev.wheezeCount, newCoughCount, parseFloat(prev.spo2), prev.breathingRate);
@@ -1024,7 +1026,7 @@ const App = () => {
                       
                       <button 
                         onClick={() => {
-                          
+                          setIsTestingMode(true);
                           setSensors(prev => {
                             const newSpo2 = 91;
                             const newBreathingRate = 42;
@@ -1053,7 +1055,7 @@ const App = () => {
                       
                       <button 
                         onClick={() => {
-                          
+                          setIsTestingMode(false);
                           setSensors(prev => {
                             const newSpo2 = 98;
                             const newBreathingRate = 18;
