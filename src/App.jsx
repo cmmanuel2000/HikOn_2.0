@@ -91,7 +91,7 @@ const fetchHistoricalData = async (days, patientId = null) => {
     
     rawData.forEach(record => {
       const date = new Date(record.created_at);
-      const dayKey = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dayKey = date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
       
       if (!groupedByDay[dayKey]) {
         groupedByDay[dayKey] = {
