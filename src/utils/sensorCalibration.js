@@ -12,11 +12,11 @@
  */
 
 // --- SpO2 Calibration ---
-// Derived from patient testing comparison mapping raw chest MAX30102 values to finger ground truths:
-//   Test 1: finger=98%, chest=90.1%, gap=+7.9%
-//   Test 2: finger=98%, chest=89.8%, gap=+8.2%
-//   Average Universal Offset: +8.0%
-const SPO2_CHEST_OFFSET = 8.0;
+// Derived from patient testing comparison mapping raw chest MAX30102 values to finger pulse oximeter ground truths.
+// Bland-Altman statistical analysis on the full 18-sample clinical dataset revealed a mean bias of -5.13% 
+// (the chest device reads 5.13% lower than the reference finger oximeter on average).
+// Universal Calibration Offset: +5.13%
+const SPO2_CHEST_OFFSET = 5.13;
 
 /**
  * Calibrate a raw chest SpO2 reading to match finger pulse oximeter values.

@@ -13,13 +13,13 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
-// Calibration constants for RESTING state (Using Y-Axis)
-const REST_ZC_SLOPE = 9.21;
-const REST_ZC_INTERCEPT = 0.97;
+// Calibration constants for RESTING state (Using Z-Axis)
+const REST_ZC_SLOPE = 2.732;
+const REST_ZC_INTERCEPT = 18.918;
 
-// Calibration constants for ACTIVE state (Using X-Axis)
-const ACTIVE_ZC_SLOPE = 3.5;
-const ACTIVE_ZC_INTERCEPT = 22.0;
+// Calibration constants for ACTIVE state (Using Z-Axis)
+const ACTIVE_ZC_SLOPE = 5.895;
+const ACTIVE_ZC_INTERCEPT = 21.897;
 
 // Rest detection threshold: accel_magnitude std dev must be below this
 const REST_THRESHOLD = 0.05;
@@ -109,17 +109,17 @@ export async function calculateBreathingRate() {
     let bpm = 0;
 
     if (patientAtRest) {
-      // Resting: Use Y-axis for zero-crossing analysis
-      const yValues = window.map(r => r.accel_y);
-      const zeroCrossings = countZeroCrossings(yValues);
+      // Resting: Use Z-axis for zero-crossing analysis
+      const zValues = window.map(r => r.accel_z);
+      const zeroCrossings = countZeroCrossings(zValues);
       bpm = REST_ZC_SLOPE * zeroCrossings + REST_ZC_INTERCEPT;
-      console.log(`[BreathingRate] Rest detected. ZC_Y=${zeroCrossings}, Calculated BPM=${bpm}`);
+      console.log(`[BreathingRate] Rest detected. ZC_Z=${zeroCrossings}, Calculated BPM=${bpm}`);
     } else {
-      // Active: Use X-axis for zero-crossing analysis
-      const xValues = window.map(r => r.accel_x);
-      const zeroCrossings = countZeroCrossings(xValues);
+      // Active: Use Z-axis for zero-crossing analysis
+      const zValues = window.map(r => r.accel_z);
+      const zeroCrossings = countZeroCrossings(zValues);
       bpm = ACTIVE_ZC_SLOPE * zeroCrossings + ACTIVE_ZC_INTERCEPT;
-      console.log(`[BreathingRate] Active motion detected. ZC_X=${zeroCrossings}, Calculated BPM=${bpm}`);
+      console.log(`[BreathingRate] Active motion detected. ZC_Z=${zeroCrossings}, Calculated BPM=${bpm}`);
     }
 
     // Clamp to physiological range (children: 12-60 BPM)

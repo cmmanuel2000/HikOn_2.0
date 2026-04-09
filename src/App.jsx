@@ -310,16 +310,32 @@ const App = () => {
       const spo2 = calibrateSpO2(rawSpo2) || 0;
       const heartRate = calibrateHeartRate(rawHeartRate) || 0;
       
-      console.log(`[Calibration] SpO2: ${rawSpo2.toFixed(1)} -> ${spo2} (+8.0 offset) | HR: ${rawHeartRate.toFixed(0)} -> ${heartRate} (median filter)`);
+      console.log(`[Calibration] SpO2: ${rawSpo2.toFixed(1)} -> ${spo2} (+5.13 offset) | HR: ${rawHeartRate.toFixed(0)} -> ${heartRate} (median filter)`);
 
       const brResult = await calculateBreathingRate();
       let breathingRate;
-      if (brResult.breathingRate !== null && brResult.isAtRest) {
-        // Real measurement from accelerometer at rest
+      if (brResult.breathingRate !== null) {
+        // Real measurement from accelerometer (now fully supports both Rest and Active!)
         breathingRate = brResult.breathingRate;
-        console.log(`[BR] Measured from accel: ${breathingRate} BPM (at rest)`);
+        console.log(`[BR] Measured from accel: ${breathingRate} BPM (${brResult.isAtRest ? 'at rest' : 'active'})`);
+        
+        // SYNC TIMING: Backfill the ESP32's 1-minute upload row with the calculated breathing rate
+        if (latest.id && (latest.br_rate === null || latest.br_rate === undefined)) {
+           fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?id=eq.${latest.id}`, {
+             method: 'PATCH',
+             headers: {
+               'apikey': SUPABASE_KEY,
+               'Authorization': `Bearer ${SUPABASE_KEY}`,
+               'Content-Type': 'application/json',
+               'Prefer': 'return=minimal'
+             },
+             body: JSON.stringify({ br_rate: breathingRate })
+           })
+           .then(res => { if(res.ok) console.log(`[Sync] Saved Breathing Rate ${breathingRate} to Supabase row ${latest.id}`); })
+           .catch(err => console.error('[Sync] Error saving BR:', err));
+        }
       } else {
-        // Fallback: estimate from heart rate when moving or no data
+        // Fallback: estimate from heart rate only if accel is completely missing
         const estimatedBreathingRate = heartRate > 0 ? Math.round(heartRate / 4.5) : 16;
         breathingRate = Math.max(12, Math.min(45, estimatedBreathingRate));
         console.log(`[BR] Estimated (${brResult.confidence}): ${breathingRate} BPM`);
