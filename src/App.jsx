@@ -567,8 +567,13 @@ const App = () => {
 
   if (!userRole) {
     return (
-      <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${themeClasses.bg} ${themeClasses.text} font-sans selection:bg-lime-200 antialiased relative`}>
-        <div className={`fixed -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] pointer-events-none transition-opacity duration-700 ${theme === 'light' ? 'bg-blue-600/5 opacity-100' : 'bg-blue-400/10 opacity-60'}`} />
+      <div 
+        className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${themeClasses.text} font-sans selection:bg-lime-200 antialiased relative bg-cover bg-center bg-no-repeat`}
+        style={{ backgroundImage: "url('/asthma_children_backdrop.png')" }}
+      >
+        {/* Soft overlay to ensure text and cards are readable while letting the backdrop show through */}
+        <div className={`absolute inset-0 z-0 transition-colors duration-500 ${theme === 'light' ? 'bg-white/85' : 'bg-[#0f172a]/90'} backdrop-blur-[2px]`}></div>
+        <div className={`fixed z-0 -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] pointer-events-none transition-opacity duration-700 ${theme === 'light' ? 'bg-blue-600/10 opacity-100' : 'bg-blue-400/20 opacity-60'}`} />
         
         <div className="z-10 flex flex-col items-center max-w-lg w-full px-6">
           <div className="mb-12">
