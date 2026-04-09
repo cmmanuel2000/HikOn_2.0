@@ -43,9 +43,16 @@ import {
   Clock
 } from 'lucide-react';
 
-// --- SUPABASE CONFIG ---
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+
+// Connection check for debugging
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error("⚠️ Supabase Credentials Missing! dashboard data will not load.");
+  console.log("Expected VITE_SUPABASE_URL:", SUPABASE_URL);
+  console.log("Expected VITE_SUPABASE_KEY:", SUPABASE_KEY ? "EXISTS" : "MISSING");
+}
+
 
 // --- FUSION LOGIC UTILITIES ---
 import { hybridFusion } from './utils/fusionLogic';
@@ -69,6 +76,9 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
     startDate.setDate(startDate.getDate() - days);
     const patientFilter = (role === 'admin' && patientId) ? `&patient_id=eq.${patientId}` : '';
 
+    console.log(`🔍 Fetching historical data for last ${days} days...`);
+    console.log(`📅 Start Date: ${startDate.toISOString()}`);
+    
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${startDate.toISOString()}${patientFilter}&order=created_at.asc`,
       {
@@ -385,11 +395,13 @@ const App = () => {
       }
       const data = await latestRes.json();
       if (data.length === 0) {
-        console.log(`📊 No data yet for ${patient.patientId}`);
+        const patientName = userRole === 'admin' && patients.find(p => p.id === selectedPatientId)?.name;
+        console.log(`📊 No data found recently ${patientName ? `for ${patientName}` : '(All Patients)'}`);
         return;
       }
       const latest = data[0];
-      console.log('📊 Latest data:', latest);
+      console.log('📊 Latest record fetched from Supabase:', latest);
+
 
       let wheezeCount = 0;
       let coughCount = 0;
@@ -782,7 +794,17 @@ const App = () => {
                 <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${theme === 'light' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-emerald-900/20 text-emerald-400 border-emerald-900/40'}`}>
                   <CheckCircle2 size={10} /> Live Monitoring
                 </div>
+                {!SUPABASE_URL || !SUPABASE_KEY ? (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                    <AlertTriangle size={10} /> Supabase Disconnected
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    <ShieldCheck size={10} /> Supabase Connected
+                  </div>
+                )}
                 <span className={`text-[11px] font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Last Successful Sync: {lastSync}</span>
+
               </div>
             </div>
             
