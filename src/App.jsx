@@ -63,11 +63,11 @@ import { HikOnLogo, RiskBadge, Reading, ActionCard, StatCard } from './component
 
 
 // Fetch historical data from Supabase
-const fetchHistoricalData = async (days, patientId = null) => {
+const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
   try {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    const patientFilter = patientId ? `&patient_id=eq.${patientId}` : '';
+    const patientFilter = (role === 'admin' && patientId) ? `&patient_id=eq.${patientId}` : '';
 
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${startDate.toISOString()}${patientFilter}&order=created_at.asc`,
@@ -182,6 +182,7 @@ const fetchHistoricalData = async (days, patientId = null) => {
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [userRole, setUserRole] = useState(null);
   const [theme, setTheme] = useState('light');
   const [lastSync, setLastSync] = useState('Syncing...');
   const [isAlertVisible, setIsAlertVisible] = useState(false);
@@ -269,8 +270,14 @@ const App = () => {
   const fetchLatestSensorData = useCallback(async () => {
     if (isTestingMode) return;
     try {
-      const patient = patients.find(p => p.id === selectedPatientId);
-      if (!patient) return;
+      let patientFilter = '';
+      let patientFilterWithAmp = '';
+      if (userRole === 'admin') {
+         const patient = patients.find(p => p.id === selectedPatientId);
+         if (!patient) return;
+         patientFilter = `patient_id=eq.${patient.patientId}&`;
+         patientFilterWithAmp = `&patient_id=eq.${patient.patientId}`;
+      }
 
       const oneHourAgo = new Date();
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
@@ -278,8 +285,8 @@ const App = () => {
 
       // Fire the two display fetches in parallel
       const [latestRes, eventsRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?patient_id=eq.${patient.patientId}&heart_rate=not.is.null&order=created_at.desc&limit=1`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${oneHourAgo.toISOString()}&patient_id=eq.${patient.patientId}&select=cough,wheeze`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?${patientFilter}heart_rate=not.is.null&order=created_at.desc&limit=1`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${oneHourAgo.toISOString()}${patientFilterWithAmp}&select=cough,wheeze`, { headers })
       ]);
 
       if (!latestRes.ok) {
@@ -406,7 +413,7 @@ const App = () => {
     } catch (error) {
       console.error('❌ Error fetching sensor data:', error);
     }
-  }, [selectedPatientId, patients, isTestingMode]);
+  }, [selectedPatientId, patients, isTestingMode, userRole]);
 
   // Stamp all NULL rows to the selected patient immediately (called by Record button)
   const recordForPatient = useCallback(async () => {
@@ -437,8 +444,11 @@ const App = () => {
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
       
-      const patient = patients.find(p => p.id === selectedPatientId);
-      const patientFilter = patient ? `&patient_id=eq.${patient.patientId}` : '';
+      let patientFilter = '';
+      if (userRole === 'admin') {
+        const patient = patients.find(p => p.id === selectedPatientId);
+        patientFilter = patient ? `&patient_id=eq.${patient.patientId}` : '';
+      }
 
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${twentyFourHoursAgo.toISOString()}${patientFilter}&order=created_at.asc&select=created_at,spo2`,
@@ -489,7 +499,7 @@ const App = () => {
     } catch (error) {
       console.error('Error fetching 24h vitals:', error);
     }
-  }, [selectedPatientId, patients]);
+  }, [selectedPatientId, patients, userRole]);
 
   // Fetch sensor data every 10 seconds (ESP32 uploads every ~10-15 seconds)
   useEffect(() => {
@@ -516,16 +526,18 @@ const App = () => {
   // Load historical data only when the history tab is open and a patient is selected
   useEffect(() => {
     setTrendData([]); // Clear stale data immediately when patient changes
-    if (activeTab !== 'history' || !selectedPatient?.patientId) return;
+    if (activeTab !== 'history') return;
+    if (userRole === 'admin' && !selectedPatient?.patientId) return;
+    
     const loadHistoricalData = async () => {
       setIsLoadingHistory(true);
       const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-      const data = await fetchHistoricalData(days, selectedPatient.patientId);
+      const data = await fetchHistoricalData(days, selectedPatient?.patientId, userRole);
       setTrendData(data);
       setIsLoadingHistory(false);
     };
     loadHistoricalData();
-  }, [selectedPatientId, activeTab]); // Reload when patient or tab changes
+  }, [selectedPatientId, activeTab, userRole, selectedPatient, dateRange]); // Reload when patient or tab changes
 
 
   const toggleTheme = () => {
@@ -537,7 +549,7 @@ const App = () => {
     setDateRange(range);
     setIsLoadingHistory(true);
     const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-    const data = await fetchHistoricalData(days, selectedPatient?.patientId);
+    const data = await fetchHistoricalData(days, selectedPatient?.patientId, userRole);
     setTrendData(data);
     setIsLoadingHistory(false);
   };
@@ -552,6 +564,65 @@ const App = () => {
     border: theme === 'light' ? 'border-slate-200' : 'border-slate-800',
     footer: theme === 'light' ? 'bg-white/80 border-slate-100' : 'bg-[#151c2e]/80 border-slate-800'
   };
+
+  if (!userRole) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${themeClasses.bg} ${themeClasses.text} font-sans selection:bg-lime-200 antialiased relative`}>
+        <div className={`fixed -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] pointer-events-none transition-opacity duration-700 ${theme === 'light' ? 'bg-blue-600/5 opacity-100' : 'bg-blue-400/10 opacity-60'}`} />
+        
+        <div className="z-10 flex flex-col items-center max-w-lg w-full px-6">
+          <div className="mb-12">
+            <HikOnLogo theme={theme} />
+          </div>
+          
+          <h1 className={`text-3xl font-black mb-2 text-center tracking-tight ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>
+            Welcome to HikOn
+          </h1>
+          <p className={`text-sm font-bold uppercase tracking-widest text-center mb-10 ${themeClasses.subtext}`}>
+            Select Your Access Level
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <button 
+              onClick={() => setUserRole('user')}
+              className={`p-8 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 group ${theme === 'light' ? 'bg-white border-blue-100 hover:border-blue-400 shadow-xl shadow-blue-900/5' : 'bg-[#1e293b] border-slate-700 hover:border-blue-500 shadow-xl shadow-blue-900/20'}`}
+            >
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${theme === 'light' ? 'bg-blue-50 text-blue-600' : 'bg-blue-900/30 text-blue-400'}`}>
+                <User size={32} />
+              </div>
+              <div className="text-center">
+                <h3 className={`text-lg font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>User Mode</h3>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${themeClasses.subtext}`}>View Core Vitals</p>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => setUserRole('admin')}
+              className={`p-8 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 group ${theme === 'light' ? 'bg-white border-emerald-100 hover:border-emerald-400 shadow-xl shadow-emerald-900/5' : 'bg-[#1e293b] border-slate-700 hover:border-emerald-500 shadow-xl shadow-emerald-900/20'}`}
+            >
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${theme === 'light' ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-900/30 text-emerald-400'}`}>
+                <LayoutDashboard size={32} />
+              </div>
+              <div className="text-center">
+                <h3 className={`text-lg font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>Admin Mode</h3>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${themeClasses.subtext}`}>Developer Portal</p>
+              </div>
+            </button>
+          </div>
+          
+          <div className="mt-12">
+            <button
+              onClick={toggleTheme}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-colors ${theme === 'light' ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+            >
+              {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+              {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${themeClasses.bg} ${themeClasses.text} font-sans selection:bg-lime-200 antialiased overflow-x-hidden relative`}>      
@@ -589,13 +660,15 @@ const App = () => {
             theme={theme}
             onClick={() => { setActiveTab('history');  }} 
           />
-          <NavItem 
-            icon={<User size={22}/>} 
-            label="Patients" 
-            active={activeTab === 'patients'} 
-            theme={theme}
-            onClick={() => { setActiveTab('patients');  }} 
-          />
+          {userRole === 'admin' && (
+            <NavItem 
+              icon={<User size={22}/>} 
+              label="Patients" 
+              active={activeTab === 'patients'} 
+              theme={theme}
+              onClick={() => { setActiveTab('patients');  }} 
+            />
+          )}
           <NavItem 
             icon={<Bell size={22}/>} 
             label="Notifications" 
@@ -654,21 +727,25 @@ const App = () => {
                   </option>
                 ))}
               </select>
-              <button
-                onClick={recordForPatient}
-                disabled={isRecording}
-                className={`px-3 py-2 rounded-xl font-bold text-xs border-2 transition-all hover:scale-105 active:scale-95 ${isRecording ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'light' ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : 'bg-red-900/30 border-red-700 text-red-400 hover:bg-red-900/50'}`}
-                title="Stamp all untagged sensor rows to selected patient"
-              >
-                {isRecording ? '...' : '⬤ RECORD'}
-              </button>
-              <button
-                onClick={openAddPatientModal}
-                className={`p-2 rounded-xl transition-all hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-blue-50 text-[#1e3a8a] hover:bg-blue-100' : 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'}`}
-                title="Add New Patient"
-              >
-                <Plus size={18} />
-              </button>
+              {userRole === 'admin' && (
+                <>
+                  <button
+                    onClick={recordForPatient}
+                    disabled={isRecording}
+                    className={`px-3 py-2 rounded-xl font-bold text-xs border-2 transition-all hover:scale-105 active:scale-95 ${isRecording ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'light' ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : 'bg-red-900/30 border-red-700 text-red-400 hover:bg-red-900/50'}`}
+                    title="Stamp all untagged sensor rows to selected patient"
+                  >
+                    {isRecording ? '...' : '⬤ RECORD'}
+                  </button>
+                  <button
+                    onClick={openAddPatientModal}
+                    className={`p-2 rounded-xl transition-all hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-blue-50 text-[#1e3a8a] hover:bg-blue-100' : 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'}`}
+                    title="Add New Patient"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -975,6 +1052,7 @@ const App = () => {
 
 
                 {/* NEW: Fusion Logic Test Controls */}
+                {userRole === 'admin' && (
                 <div className="space-y-4 pt-6 border-t border-slate-700/10">
                   <p className={`text-[10px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Fusion Logic Testing</p>
                   
@@ -1113,6 +1191,24 @@ const App = () => {
                         <div>Coughs: <span className="font-black">{sensors.coughCount}</span></div>
                       </div>
                     </div>
+                  </div>
+                </div>
+                )}
+
+                {/* Account Settings */}
+                <div className="space-y-4 pt-6 border-t border-slate-700/10">
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Account Management</p>
+                  <div className={`p-6 rounded-3xl border flex items-center justify-between ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-[#1e293b] border-slate-700'}`}>
+                    <div>
+                        <p className="font-bold text-sm">Sign Out</p>
+                        <p className={`text-xs ${themeClasses.subtext}`}>Switch between Admin and User access levels.</p>
+                    </div>
+                    <button 
+                      onClick={() => setUserRole(null)}
+                      className={`px-4 py-2 font-bold text-xs uppercase tracking-wide rounded-xl transition-all ${theme === 'light' ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                    >
+                      Sign Out
+                    </button>
                   </div>
                 </div>
               </div>
