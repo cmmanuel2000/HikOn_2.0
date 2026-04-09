@@ -706,6 +706,7 @@ const App = () => {
             </div>
             
             {/* PATIENT SELECTOR */}
+            {userRole === 'admin' && (
             <div className="flex items-center gap-2">
               <User size={16} className={themeClasses.subtext} />
               <select 
@@ -727,26 +728,23 @@ const App = () => {
                   </option>
                 ))}
               </select>
-              {userRole === 'admin' && (
-                <>
-                  <button
-                    onClick={recordForPatient}
-                    disabled={isRecording}
-                    className={`px-3 py-2 rounded-xl font-bold text-xs border-2 transition-all hover:scale-105 active:scale-95 ${isRecording ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'light' ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : 'bg-red-900/30 border-red-700 text-red-400 hover:bg-red-900/50'}`}
-                    title="Stamp all untagged sensor rows to selected patient"
-                  >
-                    {isRecording ? '...' : '⬤ RECORD'}
-                  </button>
-                  <button
-                    onClick={openAddPatientModal}
-                    className={`p-2 rounded-xl transition-all hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-blue-50 text-[#1e3a8a] hover:bg-blue-100' : 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'}`}
-                    title="Add New Patient"
-                  >
-                    <Plus size={18} />
-                  </button>
-                </>
-              )}
+              <button
+                onClick={recordForPatient}
+                disabled={isRecording}
+                className={`px-3 py-2 rounded-xl font-bold text-xs border-2 transition-all hover:scale-105 active:scale-95 ${isRecording ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'light' ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : 'bg-red-900/30 border-red-700 text-red-400 hover:bg-red-900/50'}`}
+                title="Stamp all untagged sensor rows to selected patient"
+              >
+                {isRecording ? '...' : '⬤ RECORD'}
+              </button>
+              <button
+                onClick={openAddPatientModal}
+                className={`p-2 rounded-xl transition-all hover:scale-105 active:scale-95 ${theme === 'light' ? 'bg-blue-50 text-[#1e3a8a] hover:bg-blue-100' : 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'}`}
+                title="Add New Patient"
+              >
+                <Plus size={18} />
+              </button>
             </div>
+            )}
           </div>
 
           <div className="flex items-center gap-5">{/* THEME TOGGLE SWITCH */}
@@ -988,6 +986,7 @@ const App = () => {
                 </div>
 
                 <div className="h-[300px] w-full relative z-10">
+                  {vitalsTrend.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={vitalsTrend}>
                         <defs>
@@ -1006,6 +1005,13 @@ const App = () => {
                         <Area type="monotone" dataKey="spo2" stroke={theme === 'light' ? "#1e3a8a" : "#60a5fa"} strokeWidth={4} fillOpacity={1} fill="url(#colorSp)" />
                       </AreaChart>
                     </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center opacity-70">
+                      <Clock size={36} className={`mb-3 ${theme === 'light' ? 'text-slate-300' : 'text-slate-600'}`} />
+                      <p className={`font-black text-sm uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>No Data Yet</p>
+                      <p className={`text-[10px] uppercase font-bold mt-1 tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>Device hasn't sent data in the last 24h</p>
+                    </div>
+                  )}
                 </div>
             </div>
 
