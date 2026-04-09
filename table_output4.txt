@@ -1,0 +1,14 @@
+| Patient | Calibrated Rest BR | Calibrated Active BR | Target Manual Rest | Target Manual Active |
+|---|---|---|---|---|
+| 2nd Luis | 24.9 br/m | 34.2 br/m | 30 | 35 |
+| 2nd Princess | 27.1 br/m | 33.1 br/m | 26 | 37 |
+| Dwayne | 26.1 br/m | 28.7 br/m | 21 | 27 |
+| Erin | 25.1 br/m | 31.4 br/m | 28 | 37 |
+| Kim | 25.3 br/m | 33.1 br/m | 22 | 29 |
+| Luis | 27.4 br/m | 41.9 br/m | N/A | N/A |
+| Miguelito | 28.0 br/m | 28.9 br/m | 32 | 29 |
+| Nino | 26.9 br/m | 31.8 br/m | N/A | N/A |
+| Pia | 26.4 br/m | 27.8 br/m | 26 | 28 |
+| Princess | 26.2 br/m | 29.3 br/m | N/A | N/A |
+| Sheila | 25.2 br/m | 32.7 br/m | 27 | 28 |
+| Tyler | 25.8 br/m | 29.1 br/m | 22 | 29 |

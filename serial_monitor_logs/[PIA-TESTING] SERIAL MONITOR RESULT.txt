@@ -1,0 +1,647 @@
+20:24:09.832 -> [HikOn] Booting...
+20:24:10.340 -> [WiFi] Connecting......
+20:24:12.875 -> [WiFi] Connected
+20:24:13.323 -> [I2S] Ready
+20:24:13.323 -> [PMS7003] UART ready
+20:24:13.323 -> [System] Initialization complete.
+20:24:17.446 -> [HR] 11.2 | [SPO2] Initializing... | IR: 60870
+20:24:18.265 -> [HR] 29.2 | [SPO2] Initializing... | IR: 61064
+20:24:20.724 -> [SpO2] Discarded noisy reading.
+20:24:24.523 -> [HR] 50.2 | [SPO2] Initializing... | IR: 60648
+20:24:25.292 -> [HR] 70.5 | [SPO2] Initializing... | IR: 60430
+20:24:25.928 -> [HR] 82.2 | [SPO2] Initializing... | IR: 60299
+20:24:31.971 -> [SpO2] Discarded noisy reading.
+20:24:33.240 -> [HR] 95.0 | [SPO2] Initializing... | IR: 60986
+20:24:33.682 -> [HR] 105.5 | [SPO2] Initializing... | IR: 60944
+20:24:34.104 -> [HR] 121.2 | [SPO2] Initializing... | IR: 60961
+20:24:34.963 -> [HR] 116.2 | [SPO2] Initializing... | IR: 60804
+20:24:35.934 -> [HR] 113.0 | [SPO2] Initializing... | IR: 60758
+20:24:35.934 -> [HR] 115.2 | [SPO2] Initializing... | IR: 60854
+20:24:36.745 -> [HR] 97.8 | [SPO2] Initializing... | IR: 61090
+20:24:37.400 -> [HR] 102.0 | [SPO2] Initializing... | IR: 61047
+20:24:38.108 -> [HR] 95.0 | [SPO2] Initializing... | IR: 60901
+20:24:44.715 -> [HR] 88.2 | [SPO2] 99.9% (Last Read) | IR: 60774
+20:24:45.947 -> [HR] 80.2 | [SPO2] 99.9% (Last Read) | IR: 60144
+20:24:47.159 -> [HR] 71.0 | [SPO2] 99.9% (Last Read) | IR: 59949
+20:24:51.035 -> [SpO2] Discarded noisy reading.
+20:24:53.142 -> [HR] 64.2 | [SPO2] 99.9% (Last Read) | IR: 59243
+20:24:55.173 -> [HR] 72.5 | [SPO2] 99.9% (Last Read) | IR: 60084
+20:24:55.979 -> [HR] 80.2 | [SPO2] 99.9% (Last Read) | IR: 60081
+20:24:56.418 -> [HR] 103.2 | [SPO2] 99.9% (Last Read) | IR: 60420
+20:24:57.196 -> [HR] 108.0 | [SPO2] 99.9% (Last Read) | IR: 61342
+20:25:02.186 -> [HR] 86.0 | [SPO2] 99.8% (Last Read) | IR: 62379
+20:25:05.964 -> [HR] 88.2 | [SPO2] 99.8% (Last Read) | IR: 62011
+20:25:05.964 -> [HR] 85.8 | [SPO2] 99.8% (Last Read) | IR: 60516
+20:25:06.772 -> [HR] 85.5 | [SPO2] 99.8% (Last Read) | IR: 59657
+20:25:07.357 -> [HR] 96.8 | [SPO2] 99.8% (Last Read) | IR: 59569
+20:25:08.372 -> 
+20:25:08.372 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:25:08.372 -> [Audio] Capturing 3-second sample...
+20:25:11.280 -> [Audio] RMS Energy: 401.58
+20:25:11.542 -> [Audio] Sending to cloud (attempt 1/3)...
+20:25:16.488 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9993112087249756,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:25:16.488 -> [Audio] Result: normal (Check: HF-ONLY)
+20:25:16.488 -> ├─ [Physio] Status: safe | HR: 96.8 | SpO2: 99.8% | Audio: normal
+20:25:16.488 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 30/40/47 | T: 33.0 | H: 72.6
+20:25:16.488 -> └─ [OVERALL]: critical
+20:25:16.488 -> [Status] Updating device status (UPSERT)...
+20:25:18.231 -> [Status] Status Updated (HTTP 201)
+20:25:23.730 -> [HR] 86.5 | [SPO2] 98.5% (Last Read) | IR: 58999
+20:25:26.119 -> [HR] 67.0 | [SPO2] 98.5% (Last Read) | IR: 57810
+20:25:27.421 -> [HR] 60.0 | [SPO2] 98.5% (Last Read) | IR: 57602
+20:25:28.436 -> [HR] 49.5 | [SPO2] 98.5% (Last Read) | IR: 57732
+20:25:32.796 -> [HR] 62.2 | [SPO2] 95.5% (Last Read) | IR: 57353
+20:25:35.829 -> [HR] 91.0 | [SPO2] 95.5% (Last Read) | IR: 58743
+20:25:36.733 -> [HR] 95.8 | [SPO2] 95.5% (Last Read) | IR: 58670
+20:25:42.604 -> [HR] 95.2 | [SPO2] 94.4% (Last Read) | IR: 58169
+20:25:43.452 -> [HR] 90.0 | [SPO2] 94.4% (Last Read) | IR: 58663
+20:25:44.090 -> [HR] 69.5 | [SPO2] 94.4% (Last Read) | IR: 58660
+20:25:45.434 -> [HR] 64.5 | [SPO2] 94.4% (Last Read) | IR: 57416
+20:25:46.048 -> [HR] 77.5 | [SPO2] 94.4% (Last Read) | IR: 57669
+20:25:46.806 -> [HR] 77.8 | [SPO2] 94.4% (Last Read) | IR: 57770
+20:25:47.389 -> [HR] 82.0 | [SPO2] 94.4% (Last Read) | IR: 57706
+20:25:47.784 -> [HR] 108.8 | [SPO2] 94.4% (Last Read) | IR: 57871
+20:25:55.205 -> [HR] 104.2 | [SPO2] 94.4% (Last Read) | IR: 57666
+20:25:56.569 -> [HR] 96.8 | [SPO2] 94.4% (Last Read) | IR: 57825
+20:25:57.109 -> [HR] 100.0 | [SPO2] 94.4% (Last Read) | IR: 57643
+20:25:58.075 -> [HR] 77.8 | [SPO2] 94.4% (Last Read) | IR: 57592
+20:25:58.964 -> [HR] 100.0 | [SPO2] 94.4% (Last Read) | IR: 57710
+20:25:58.964 -> [HR] 116.5 | [SPO2] 94.4% (Last Read) | IR: 57479
+20:26:04.763 -> [HR] 97.5 | [SPO2] 93.9% (Last Read) | IR: 57543
+20:26:06.010 -> [HR] 93.5 | [SPO2] 93.9% (Last Read) | IR: 57304
+20:26:06.541 -> [HR] 78.5 | [SPO2] 93.9% (Last Read) | IR: 57293
+20:26:07.013 -> [HR] 83.0 | [SPO2] 93.9% (Last Read) | IR: 57289
+20:26:07.396 -> [HR] 111.0 | [SPO2] 93.9% (Last Read) | IR: 57290
+20:26:07.960 -> [HR] 125.2 | [SPO2] 93.9% (Last Read) | IR: 57340
+20:26:08.377 -> 
+20:26:08.377 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:26:08.377 -> [Audio] Capturing 3-second sample...
+20:26:11.345 -> [Audio] RMS Energy: 3219.39
+20:26:11.559 -> [Audio] Sending to cloud (attempt 1/3)...
+20:26:14.495 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999632835388184,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:26:14.495 -> [Audio] Result: normal (Check: HF-ONLY)
+20:26:14.495 -> ├─ [Physio] Status: medium | HR: 125.2 | SpO2: 93.9% | Audio: normal
+20:26:14.495 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 30/40/47 | T: 33.1 | H: 72.8
+20:26:14.495 -> └─ [OVERALL]: critical
+20:26:14.495 -> [Status] Updating device status (UPSERT)...
+20:26:15.241 -> [Status] Status Updated (HTTP 200)
+20:26:20.239 -> [HR] 117.2 | [SPO2] 93.6% (Last Read) | IR: 59201
+20:26:32.058 -> [HR] 104.0 | [SPO2] 95.2% (Last Read) | IR: 60340
+20:26:32.667 -> [HR] 89.8 | [SPO2] 95.2% (Last Read) | IR: 60527
+20:26:34.144 -> [HR] 74.0 | [SPO2] 95.2% (Last Read) | IR: 58289
+20:26:34.862 -> [HR] 89.5 | [SPO2] 95.2% (Last Read) | IR: 58594
+20:26:35.845 -> [HR] 93.0 | [SPO2] 95.2% (Last Read) | IR: 58322
+20:26:41.508 -> [HR] 90.2 | [SPO2] 96.1% (Last Read) | IR: 57578
+20:26:41.677 -> [HR] 107.8 | [SPO2] 96.1% (Last Read) | IR: 57638
+20:26:42.380 -> [HR] 92.5 | [SPO2] 96.1% (Last Read) | IR: 57751
+20:26:43.059 -> [HR] 92.2 | [SPO2] 96.1% (Last Read) | IR: 57720
+20:26:43.504 -> [HR] 105.5 | [SPO2] 96.1% (Last Read) | IR: 58307
+20:26:50.603 -> [HR] 90.8 | [SPO2] 91.6% (Last Read) | IR: 58734
+20:26:51.773 -> [HR] 82.2 | [SPO2] 91.6% (Last Read) | IR: 58218
+20:26:52.659 -> [HR] 77.0 | [SPO2] 91.6% (Last Read) | IR: 57752
+20:26:53.202 -> [HR] 70.5 | [SPO2] 91.6% (Last Read) | IR: 57709
+20:26:53.856 -> [HR] 80.8 | [SPO2] 91.6% (Last Read) | IR: 57764
+20:26:54.871 -> [HR] 82.2 | [SPO2] 91.6% (Last Read) | IR: 58042
+20:26:55.529 -> [HR] 90.5 | [SPO2] 91.6% (Last Read) | IR: 58092
+20:26:59.793 -> [HR] 75.5 | [SPO2] 91.0% (Last Read) | IR: 58071
+20:27:00.855 -> [HR] 66.8 | [SPO2] 91.0% (Last Read) | IR: 58597
+20:27:01.497 -> [HR] 74.2 | [SPO2] 91.0% (Last Read) | IR: 58243
+20:27:06.200 -> [HR] 67.2 | [SPO2] 91.0% (Last Read) | IR: 58918
+20:27:08.658 -> 
+20:27:08.658 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:27:08.658 -> [Audio] Capturing 3-second sample...
+20:27:11.872 -> [Audio] RMS Energy: 648.84
+20:27:11.872 -> [Audio] Sending to cloud (attempt 1/3)...
+20:27:14.758 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9360449910163879,"cough":0.06395497918128967,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:27:14.758 -> [Audio] Result: normal (Check: HF-ONLY)
+20:27:14.758 -> ├─ [Physio] Status: critical | HR: 67.2 | SpO2: 87.1% | Audio: normal
+20:27:14.758 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 30/40/47 | T: 33.1 | H: 72.9
+20:27:14.758 -> └─ [OVERALL]: critical
+20:27:14.820 -> [Status] Updating device status (UPSERT)...
+20:27:15.363 -> [Status] Status Updated (HTTP 200)
+20:27:19.459 -> [HR] 75.8 | [SPO2] 84.1% (Last Read) | IR: 58116
+20:27:20.030 -> [HR] 87.8 | [SPO2] 84.1% (Last Read) | IR: 57833
+20:27:20.601 -> [HR] 93.2 | [SPO2] 84.1% (Last Read) | IR: 57927
+20:27:21.150 -> [HR] 102.8 | [SPO2] 84.1% (Last Read) | IR: 58087
+20:30:46.203 -> [HikOn] Booting...
+20:30:46.702 -> [WiFi] Connecting..........
+20:30:51.185 -> [WiFi] Connected
+20:30:51.813 -> [I2S] Ready
+20:30:51.813 -> [PMS7003] UART ready
+20:30:51.813 -> [System] Initialization complete.
+20:31:14.183 -> [HikOn] Booting...
+20:31:14.183 -> [WiFi] Connecting......
+20:31:16.553 -> [WiFi] Connected
+20:31:17.024 -> [I2S] Ready
+20:31:17.024 -> [PMS7003] UART ready
+20:31:17.024 -> [System] Initialization complete.
+20:31:26.538 -> [HR] 29.0 | [SPO2] 95.0% (Last Read) | IR: 58168
+20:31:27.064 -> [HR] 56.0 | [SPO2] 95.0% (Last Read) | IR: 58186
+20:31:27.697 -> [HR] 79.8 | [SPO2] 95.0% (Last Read) | IR: 58279
+20:31:29.316 -> [HR] 90.2 | [SPO2] 95.0% (Last Read) | IR: 57601
+20:31:29.847 -> [HR] 90.2 | [SPO2] 95.0% (Last Read) | IR: 57612
+20:31:31.316 -> [HR] 73.5 | [SPO2] 95.0% (Last Read) | IR: 57986
+20:31:35.896 -> [SpO2] Discarded noisy reading.
+20:31:38.110 -> [HR] 92.8 | [SPO2] 95.0% (Last Read) | IR: 58263
+20:31:38.983 -> [HR] 99.5 | [SPO2] 95.0% (Last Read) | IR: 58290
+20:31:40.052 -> [HR] 84.5 | [SPO2] 95.0% (Last Read) | IR: 58161
+20:31:40.916 -> [HR] 116.0 | [SPO2] 95.0% (Last Read) | IR: 58171
+20:31:40.916 -> [HR] 100.5 | [SPO2] 95.0% (Last Read) | IR: 58123
+20:31:41.597 -> [HR] 104.8 | [SPO2] 95.0% (Last Read) | IR: 58080
+20:31:47.562 -> [HR] 109.8 | [SPO2] 93.3% (Last Read) | IR: 57640
+20:31:48.279 -> [HR] 87.8 | [SPO2] 93.3% (Last Read) | IR: 57386
+20:31:49.570 -> [HR] 76.0 | [SPO2] 93.3% (Last Read) | IR: 57654
+20:31:49.981 -> [HR] 93.2 | [SPO2] 93.3% (Last Read) | IR: 57644
+20:31:51.121 -> [HR] 86.8 | [SPO2] 93.3% (Last Read) | IR: 57480
+20:31:56.110 -> [HR] 81.8 | [SPO2] 93.2% (Last Read) | IR: 57677
+20:31:56.942 -> [HR] 84.5 | [SPO2] 93.2% (Last Read) | IR: 57714
+20:31:57.505 -> [HR] 72.5 | [SPO2] 93.2% (Last Read) | IR: 57600
+20:31:58.092 -> [HR] 99.8 | [SPO2] 93.2% (Last Read) | IR: 57635
+20:31:59.345 -> [HR] 97.0 | [SPO2] 93.2% (Last Read) | IR: 57657
+20:32:00.861 -> [HR] 91.2 | [SPO2] 93.2% (Last Read) | IR: 57766
+20:32:06.807 -> [HR] 80.2 | [SPO2] 93.2% (Last Read) | IR: 57820
+20:32:06.807 -> [HR] 58.5 | [SPO2] 90.3% (Last Read) | IR: 58068
+20:32:07.451 -> [HR] 68.8 | [SPO2] 90.3% (Last Read) | IR: 58084
+20:32:08.923 -> [HR] 66.2 | [SPO2] 90.3% (Last Read) | IR: 58009
+20:32:09.315 -> [HR] 87.2 | [SPO2] 90.3% (Last Read) | IR: 58022
+20:32:11.710 -> [HR] 102.2 | [SPO2] 90.3% (Last Read) | IR: 57915
+20:32:12.027 -> 
+20:32:12.027 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:32:12.027 -> [Audio] Capturing 3-second sample...
+20:32:14.926 -> [Audio] RMS Energy: 1364.92
+20:32:15.193 -> [Audio] Sending to cloud (attempt 1/3)...
+20:32:18.168 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":1,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:32:18.168 -> [Audio] Result: normal (Check: HF-ONLY)
+20:32:18.168 -> ├─ [Physio] Status: safe | HR: 102.2 | SpO2: 90.3% | Audio: normal
+20:32:18.168 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 39/52/63 | T: 33.2 | H: 72.1
+20:32:18.168 -> └─ [OVERALL]: critical
+20:32:18.205 -> [Status] Updating device status (UPSERT)...
+20:32:19.283 -> [Status] Status Updated (HTTP 200)
+20:32:22.627 -> [SpO2] Discarded noisy reading.
+20:32:25.588 -> [HR] 98.0 | [SPO2] 90.3% (Last Read) | IR: 58604
+20:32:27.926 -> [HR] 104.2 | [SPO2] 90.3% (Last Read) | IR: 58576
+20:32:27.926 -> [HR] 80.8 | [SPO2] 90.3% (Last Read) | IR: 58444
+20:32:28.461 -> [HR] 75.2 | [SPO2] 90.3% (Last Read) | IR: 58470
+20:32:29.529 -> [HR] 70.8 | [SPO2] 90.3% (Last Read) | IR: 58498
+20:32:34.631 -> [HR] 66.2 | [SPO2] 89.9% (Last Read) | IR: 58687
+20:32:35.108 -> [HR] 84.0 | [SPO2] 89.9% (Last Read) | IR: 58631
+20:32:35.750 -> [HR] 77.2 | [SPO2] 89.9% (Last Read) | IR: 58612
+20:32:36.968 -> [HR] 76.0 | [SPO2] 89.9% (Last Read) | IR: 58704
+20:32:38.233 -> [HR] 76.0 | [SPO2] 89.9% (Last Read) | IR: 58561
+20:32:39.442 -> [HR] 57.5 | [SPO2] 89.9% (Last Read) | IR: 58685
+20:32:39.871 -> [HR] 74.5 | [SPO2] 89.9% (Last Read) | IR: 58675
+20:32:42.580 -> [SpO2] Discarded noisy reading.
+20:32:47.268 -> [HR] 74.0 | [SPO2] 89.9% (Last Read) | IR: 58570
+20:32:57.303 -> [HR] 74.8 | [SPO2] 84.9% (Last Read) | IR: 58980
+20:32:58.677 -> [HR] 73.0 | [SPO2] 84.9% (Last Read) | IR: 58826
+20:33:15.565 -> 
+20:33:15.565 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:33:15.565 -> [Audio] Capturing 3-second sample...
+20:33:18.498 -> [Audio] RMS Energy: 1729.45
+20:33:18.797 -> [Audio] Sending to cloud (attempt 1/3)...
+20:33:22.209 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999938011169434,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:33:22.209 -> [Audio] Result: normal (Check: HF-ONLY)
+20:33:22.209 -> ├─ [Physio] Status: critical | HR: 73.0 | SpO2: 80.6% | Audio: normal
+20:33:22.209 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 40/53/64 | T: 33.2 | H: 72.1
+20:33:22.209 -> └─ [OVERALL]: critical
+20:33:22.209 -> [Status] Updating device status (UPSERT)...
+20:33:23.128 -> [Status] Status Updated (HTTP 200)
+20:33:27.505 -> [SpO2] Discarded noisy reading.
+20:33:29.082 -> [HR] 65.0 | [SPO2] 80.6% (Last Read) | IR: 59282
+20:33:29.869 -> [HR] 72.8 | [SPO2] 80.6% (Last Read) | IR: 59220
+20:33:30.776 -> [HR] 75.0 | [SPO2] 80.6% (Last Read) | IR: 59072
+20:33:31.569 -> [HR] 85.0 | [SPO2] 80.6% (Last Read) | IR: 58936
+20:33:32.515 -> [HR] 70.0 | [SPO2] 80.6% (Last Read) | IR: 58823
+20:33:33.113 -> [HR] 75.0 | [SPO2] 80.6% (Last Read) | IR: 58809
+20:33:33.610 -> [HR] 91.0 | [SPO2] 80.6% (Last Read) | IR: 58802
+20:33:34.132 -> [HR] 98.8 | [SPO2] 80.6% (Last Read) | IR: 58795
+20:33:41.165 -> [HR] 114.2 | [SPO2] 83.1% (Last Read) | IR: 58752
+20:33:41.372 -> [HR] 130.5 | [SPO2] 83.1% (Last Read) | IR: 58943
+20:33:42.502 -> [HR] 112.8 | [SPO2] 83.1% (Last Read) | IR: 58341
+20:33:43.324 -> [HR] 101.8 | [SPO2] 83.1% (Last Read) | IR: 58637
+20:33:49.883 -> [HR] 83.5 | [SPO2] 83.1% (Last Read) | IR: 59015
+20:33:49.883 -> [HR] 67.5 | [SPO2] 79.5% (Last Read) | IR: 58638
+20:33:52.644 -> [HR] 70.5 | [SPO2] 79.5% (Last Read) | IR: 58408
+20:33:53.731 -> [HR] 66.2 | [SPO2] 79.5% (Last Read) | IR: 58554
+20:33:54.272 -> [HR] 91.0 | [SPO2] 79.5% (Last Read) | IR: 58549
+20:33:54.880 -> [HR] 86.5 | [SPO2] 79.5% (Last Read) | IR: 58473
+20:33:59.382 -> [HR] 81.2 | [SPO2] 83.7% (Last Read) | IR: 58410
+20:33:59.961 -> [HR] 93.8 | [SPO2] 83.7% (Last Read) | IR: 58303
+20:34:03.349 -> [HR] 80.8 | [SPO2] 83.7% (Last Read) | IR: 58229
+20:34:03.349 -> [HR] 79.5 | [SPO2] 83.7% (Last Read) | IR: 58210
+20:34:03.885 -> [HR] 94.8 | [SPO2] 83.7% (Last Read) | IR: 58260
+20:34:04.411 -> [HR] 97.5 | [SPO2] 83.7% (Last Read) | IR: 58293
+20:34:05.118 -> [HR] 95.8 | [SPO2] 83.7% (Last Read) | IR: 58326
+20:34:10.693 -> [HR] 96.0 | [SPO2] 84.5% (Last Read) | IR: 58233
+20:34:11.838 -> [HR] 83.8 | [SPO2] 84.5% (Last Read) | IR: 58155
+20:34:12.235 -> [HR] 94.0 | [SPO2] 84.5% (Last Read) | IR: 58138
+20:34:12.507 -> [HR] 116.2 | [SPO2] 84.5% (Last Read) | IR: 58296
+20:34:13.466 -> [HR] 112.5 | [SPO2] 84.5% (Last Read) | IR: 57450
+20:34:14.393 -> [HR] 118.0 | [SPO2] 84.5% (Last Read) | IR: 57377
+20:34:14.976 -> [HR] 103.2 | [SPO2] 84.5% (Last Read) | IR: 57433
+20:34:17.709 -> 
+20:34:17.709 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:34:17.709 -> [Audio] Capturing 3-second sample...
+20:34:21.028 -> [Audio] RMS Energy: 1479.55
+20:34:21.028 -> [Audio] Sending to cloud (attempt 1/3)...
+20:34:28.402 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":1},"gemini_verified":true,"gemini_error":null,"scores":{"bg_noise":0.03342513367533684,"cough":0.9665747880935669,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:34:28.402 -> [Audio] Result: wheeze (Check: GEMINI VERIFIED)
+20:34:28.402 -> ├─ [Physio] Status: critical | HR: 103.2 | SpO2: 89.3% | Audio: wheeze
+20:34:28.402 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 40/53/64 | T: 33.2 | H: 72.0
+20:34:28.402 -> └─ [OVERALL]: critical
+20:34:28.402 -> [Status] Updating device status (UPSERT)...
+20:34:29.050 -> [Status] Status Updated (HTTP 200)
+20:36:57.761 -> [HikOn] Booting...
+20:36:57.761 -> [WiFi] Connecting.......
+20:37:00.792 -> [WiFi] Connected
+20:37:01.305 -> [I2S] Ready
+20:37:01.305 -> [PMS7003] UART ready
+20:37:01.305 -> [System] Initialization complete.
+20:37:19.722 -> [HikOn] Booting...
+20:37:19.722 -> [WiFi] Connecting.....
+20:37:22.160 -> [WiFi] Connected
+20:37:22.698 -> [I2S] Ready
+20:37:22.764 -> [PMS7003] UART ready
+20:37:22.764 -> [System] Initialization complete.
+20:37:25.709 -> [HR] 18.0 | [SPO2] Initializing... | IR: 63895
+20:37:26.674 -> [HR] 38.8 | [SPO2] Initializing... | IR: 64162
+20:37:27.333 -> [HR] 61.8 | [SPO2] Initializing... | IR: 63982
+20:37:27.816 -> [HR] 94.8 | [SPO2] Initializing... | IR: 63995
+20:37:33.073 -> [HR] 110.2 | [SPO2] 98.8% (Last Read) | IR: 63048
+20:37:33.822 -> [HR] 112.2 | [SPO2] 98.8% (Last Read) | IR: 63112
+20:37:34.324 -> [HR] 113.2 | [SPO2] 98.8% (Last Read) | IR: 63294
+20:37:35.071 -> [HR] 100.2 | [SPO2] 98.8% (Last Read) | IR: 63241
+20:37:35.445 -> [HR] 108.5 | [SPO2] 98.8% (Last Read) | IR: 63253
+20:37:36.330 -> [HR] 102.8 | [SPO2] 98.8% (Last Read) | IR: 63078
+20:37:37.245 -> [HR] 96.0 | [SPO2] 98.8% (Last Read) | IR: 63842
+20:37:42.257 -> [HR] 92.0 | [SPO2] 97.7% (Last Read) | IR: 63710
+20:37:45.252 -> [HR] 66.8 | [SPO2] 97.7% (Last Read) | IR: 62594
+20:37:46.192 -> [HR] 65.5 | [SPO2] 97.7% (Last Read) | IR: 62955
+20:37:51.905 -> [HR] 65.0 | [SPO2] 97.7% (Last Read) | IR: 63141
+20:37:51.905 -> [HR] 68.8 | [SPO2] 97.7% (Last Read) | IR: 63701
+20:37:53.755 -> [HR] 64.5 | [SPO2] 97.7% (Last Read) | IR: 64355
+20:37:53.755 -> [HR] 74.0 | [SPO2] 97.7% (Last Read) | IR: 64442
+20:37:54.635 -> [HR] 73.8 | [SPO2] 97.7% (Last Read) | IR: 65212
+20:37:57.156 -> [HR] 85.5 | [SPO2] 97.7% (Last Read) | IR: 66281
+20:37:57.822 -> [HR] 97.0 | [SPO2] 97.7% (Last Read) | IR: 66378
+20:38:01.308 -> [HR] 93.5 | [SPO2] 95.5% (Last Read) | IR: 66698
+20:38:02.442 -> [HR] 93.5 | [SPO2] 95.5% (Last Read) | IR: 66960
+20:38:03.233 -> [HR] 81.0 | [SPO2] 95.5% (Last Read) | IR: 66913
+20:38:03.834 -> [HR] 82.2 | [SPO2] 95.5% (Last Read) | IR: 66831
+20:38:04.235 -> [HR] 103.5 | [SPO2] 95.5% (Last Read) | IR: 66881
+20:38:04.800 -> [HR] 114.0 | [SPO2] 95.5% (Last Read) | IR: 66944
+20:38:05.416 -> [HR] 117.0 | [SPO2] 95.5% (Last Read) | IR: 66942
+20:38:06.561 -> [HR] 105.2 | [SPO2] 95.5% (Last Read) | IR: 65796
+20:38:11.729 -> [HR] 82.0 | [SPO2] 89.9% (Last Read) | IR: 66327
+20:38:12.271 -> [HR] 82.0 | [SPO2] 89.9% (Last Read) | IR: 66322
+20:38:12.799 -> [HR] 88.5 | [SPO2] 89.9% (Last Read) | IR: 66374
+20:38:14.027 -> [HR] 87.0 | [SPO2] 89.9% (Last Read) | IR: 66572
+20:38:14.567 -> [HR] 97.5 | [SPO2] 89.9% (Last Read) | IR: 66543
+20:38:17.429 -> [HR] 93.2 | [SPO2] 89.9% (Last Read) | IR: 65965
+20:38:17.429 -> [HR] 94.0 | [SPO2] 89.9% (Last Read) | IR: 66005
+20:38:18.120 -> [HR] 105.8 | [SPO2] 89.9% (Last Read) | IR: 65984
+20:38:18.152 -> 
+20:38:18.152 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:38:18.152 -> [Audio] Capturing 3-second sample...
+20:38:21.073 -> [Audio] RMS Energy: 3194.63
+20:38:21.368 -> [Audio] Sending to cloud (attempt 1/3)...
+20:38:25.761 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999996423721313,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:38:25.761 -> [Audio] Result: normal (Check: HF-ONLY)
+20:38:25.761 -> ├─ [Physio] Status: safe | HR: 105.8 | SpO2: 89.9% | Audio: normal
+20:38:25.761 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 33/43/50 | T: 33.1 | H: 71.5
+20:38:25.761 -> └─ [OVERALL]: critical
+20:38:25.761 -> [Status] Updating device status (UPSERT)...
+20:38:27.212 -> [Status] Status Updated (HTTP 200)
+20:38:31.883 -> [HR] 95.0 | [SPO2] 89.6% (Last Read) | IR: 66776
+20:38:32.393 -> [HR] 106.0 | [SPO2] 89.6% (Last Read) | IR: 66734
+20:38:32.812 -> [HR] 109.5 | [SPO2] 89.6% (Last Read) | IR: 66839
+20:38:33.484 -> [HR] 107.8 | [SPO2] 89.6% (Last Read) | IR: 67047
+20:38:34.132 -> [HR] 111.2 | [SPO2] 89.6% (Last Read) | IR: 67032
+20:38:34.761 -> [HR] 101.2 | [SPO2] 89.6% (Last Read) | IR: 66958
+20:38:35.843 -> [HR] 82.0 | [SPO2] 89.6% (Last Read) | IR: 66494
+20:38:43.131 -> [HR] 70.2 | [SPO2] 89.5% (Last Read) | IR: 66064
+20:38:44.496 -> [HR] 74.2 | [SPO2] 89.5% (Last Read) | IR: 66323
+20:38:46.525 -> [HR] 82.0 | [SPO2] 89.5% (Last Read) | IR: 66444
+20:38:46.973 -> [HR] 100.0 | [SPO2] 89.5% (Last Read) | IR: 66629
+20:38:52.869 -> [HR] 101.8 | [SPO2] 88.5% (Last Read) | IR: 66681
+20:38:53.198 -> [HR] 120.2 | [SPO2] 88.5% (Last Read) | IR: 66675
+20:38:53.864 -> [HR] 113.2 | [SPO2] 88.5% (Last Read) | IR: 67081
+20:38:54.571 -> [HR] 101.8 | [SPO2] 88.5% (Last Read) | IR: 66919
+20:38:55.022 -> [HR] 122.8 | [SPO2] 88.5% (Last Read) | IR: 67066
+20:38:55.907 -> [HR] 98.8 | [SPO2] 88.5% (Last Read) | IR: 67087
+20:38:56.236 -> [HR] 102.8 | [SPO2] 88.5% (Last Read) | IR: 67150
+20:38:56.847 -> [HR] 109.0 | [SPO2] 88.5% (Last Read) | IR: 67226
+20:38:57.349 -> [HR] 102.0 | [SPO2] 88.5% (Last Read) | IR: 67374
+20:38:57.898 -> [HR] 107.5 | [SPO2] 88.5% (Last Read) | IR: 67482
+20:39:02.441 -> [HR] 103.0 | [SPO2] 89.3% (Last Read) | IR: 67547
+20:39:02.441 -> [HR] 111.8 | [SPO2] 89.3% (Last Read) | IR: 67555
+20:39:03.098 -> [HR] 108.2 | [SPO2] 89.3% (Last Read) | IR: 67606
+20:39:03.750 -> [HR] 104.2 | [SPO2] 89.3% (Last Read) | IR: 67710
+20:39:04.234 -> [HR] 111.8 | [SPO2] 89.3% (Last Read) | IR: 67704
+20:39:04.820 -> [HR] 103.8 | [SPO2] 89.3% (Last Read) | IR: 67743
+20:39:05.381 -> [HR] 106.0 | [SPO2] 89.3% (Last Read) | IR: 67809
+20:39:06.068 -> [HR] 108.0 | [SPO2] 89.3% (Last Read) | IR: 67802
+20:39:06.524 -> [HR] 103.0 | [SPO2] 89.3% (Last Read) | IR: 67874
+20:39:07.718 -> [HR] 88.5 | [SPO2] 89.3% (Last Read) | IR: 67497
+20:39:11.955 -> [HR] 90.2 | [SPO2] 93.8% (Last Read) | IR: 67628
+20:39:13.056 -> [HR] 92.2 | [SPO2] 93.8% (Last Read) | IR: 67567
+20:39:13.056 -> [HR] 92.0 | [SPO2] 93.8% (Last Read) | IR: 67544
+20:39:13.735 -> [HR] 102.2 | [SPO2] 93.8% (Last Read) | IR: 67462
+20:39:14.227 -> [HR] 104.5 | [SPO2] 93.8% (Last Read) | IR: 67469
+20:39:15.610 -> [HR] 101.8 | [SPO2] 93.8% (Last Read) | IR: 67506
+20:39:15.610 -> [HR] 105.2 | [SPO2] 93.8% (Last Read) | IR: 67268
+20:39:16.497 -> [HR] 124.2 | [SPO2] 93.8% (Last Read) | IR: 67217
+20:39:16.497 -> [HR] 122.0 | [SPO2] 93.8% (Last Read) | IR: 67445
+20:39:17.113 -> [HR] 121.5 | [SPO2] 93.8% (Last Read) | IR: 67522
+20:39:17.820 -> [HR] 117.5 | [SPO2] 93.8% (Last Read) | IR: 67544
+20:39:21.444 -> 
+20:39:21.444 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:39:21.444 -> [Audio] Capturing 3-second sample...
+20:39:24.371 -> [Audio] RMS Energy: 645.17
+20:39:24.618 -> [Audio] Sending to cloud (attempt 1/3)...
+20:39:30.039 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9837371706962585,"cough":0.016261551529169083,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:39:30.039 -> [Audio] Result: normal (Check: HF-ONLY)
+20:39:30.039 -> ├─ [Physio] Status: medium | HR: 117.5 | SpO2: 94.3% | Audio: normal
+20:39:30.039 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 33/43/50 | T: 33.1 | H: 71.4
+20:39:30.039 -> └─ [OVERALL]: critical
+20:39:30.039 -> [Status] Updating device status (UPSERT)...
+20:39:31.069 -> [Status] Status Updated (HTTP 200)
+20:39:34.985 -> [HR] 94.2 | [SPO2] 94.8% (Last Read) | IR: 67947
+20:39:35.545 -> [HR] 94.5 | [SPO2] 94.8% (Last Read) | IR: 67943
+20:39:36.127 -> [HR] 98.2 | [SPO2] 94.8% (Last Read) | IR: 67908
+20:39:36.708 -> [HR] 97.0 | [SPO2] 94.8% (Last Read) | IR: 67752
+20:39:37.905 -> [HR] 90.8 | [SPO2] 94.8% (Last Read) | IR: 67288
+20:41:38.076 -> [HikOn] Booting...
+20:41:38.076 -> [WiFi] Connecting........
+20:41:40.236 -> [WiFi] Connected
+20:41:40.771 -> [I2S] Ready
+20:41:40.771 -> [PMS7003] UART ready
+20:41:40.771 -> [System] Initialization complete.
+20:41:43.623 -> [HR] 36.0 | [SPO2] Initializing... | IR: 57907
+20:41:50.361 -> [HR] 67.5 | [SPO2] 93.8% (Last Read) | IR: 56434
+20:41:50.750 -> [HR] 105.2 | [SPO2] 93.8% (Last Read) | IR: 56649
+20:41:58.069 -> [HR] 131.5 | [SPO2] 94.8% (Last Read) | IR: 57139
+20:41:58.450 -> [HR] 129.0 | [SPO2] 94.8% (Last Read) | IR: 57133
+20:41:59.078 -> [HR] 124.0 | [SPO2] 94.8% (Last Read) | IR: 57477
+20:41:59.560 -> [HR] 112.5 | [SPO2] 94.8% (Last Read) | IR: 57782
+20:42:00.627 -> [HR] 101.2 | [SPO2] 94.8% (Last Read) | IR: 58021
+20:42:01.018 -> [HR] 102.0 | [SPO2] 94.8% (Last Read) | IR: 57866
+20:42:01.677 -> [HR] 100.0 | [SPO2] 94.8% (Last Read) | IR: 58137
+20:42:02.400 -> [HR] 93.0 | [SPO2] 94.8% (Last Read) | IR: 58074
+20:42:10.540 -> [HR] 89.5 | [SPO2] 95.3% (Last Read) | IR: 60375
+20:42:10.992 -> [HR] 91.2 | [SPO2] 95.3% (Last Read) | IR: 60343
+20:42:13.151 -> [HR] 89.0 | [SPO2] 95.3% (Last Read) | IR: 59860
+20:42:13.151 -> [HR] 80.0 | [SPO2] 95.3% (Last Read) | IR: 59550
+20:42:13.503 -> [HR] 112.5 | [SPO2] 95.3% (Last Read) | IR: 131606
+20:42:38.165 -> 
+20:42:38.165 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:42:38.165 -> [Audio] Capturing 3-second sample...
+20:42:41.114 -> [Audio] RMS Energy: 2400.93
+20:42:41.372 -> [Audio] Sending to cloud (attempt 1/3)...
+20:43:34.899 -> [HikOn] Booting...
+20:43:34.899 -> [WiFi] Connecting......
+20:43:37.460 -> [WiFi] Connected
+20:43:37.948 -> [I2S] Ready
+20:43:37.948 -> [PMS7003] UART ready
+20:43:37.948 -> [System] Initialization complete.
+20:43:47.732 -> [SpO2] Discarded noisy reading.
+20:43:49.630 -> [HR] 18.8 | [SPO2] Initializing... | IR: 57587
+20:43:49.630 -> [HR] 44.0 | [SPO2] Initializing... | IR: 57891
+20:43:50.197 -> [HR] 72.5 | [SPO2] Initializing... | IR: 58043
+20:43:50.744 -> [HR] 95.5 | [SPO2] Initializing... | IR: 58026
+20:43:51.770 -> [HR] 91.8 | [SPO2] Initializing... | IR: 57553
+20:43:52.348 -> [HR] 93.0 | [SPO2] Initializing... | IR: 57600
+20:43:58.234 -> [HR] 85.2 | [SPO2] 98.7% (Last Read) | IR: 58541
+20:44:06.990 -> [HR] 91.2 | [SPO2] 98.0% (Last Read) | IR: 58365
+20:44:07.337 -> [HR] 119.2 | [SPO2] 98.0% (Last Read) | IR: 58338
+20:44:08.068 -> [HR] 113.8 | [SPO2] 98.0% (Last Read) | IR: 58199
+20:44:33.248 -> [HR] 117.5 | [SPO2] 98.0% (Last Read) | IR: 58308
+20:44:33.248 -> 
+20:44:33.248 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:44:33.248 -> [Audio] Capturing 3-second sample...
+20:44:36.147 -> [Audio] RMS Energy: 532.72
+20:44:36.405 -> [Audio] Sending to cloud (attempt 1/3)...
+20:44:58.411 -> [HikOn] Booting...
+20:44:58.505 -> [WiFi] Connecting......
+20:45:01.463 -> [WiFi] Connected
+20:45:01.961 -> [I2S] Ready
+20:45:01.961 -> [PMS7003] UART ready
+20:45:01.961 -> [System] Initialization complete.
+20:45:29.575 -> [HikOn] Booting...
+20:45:29.575 -> [WiFi] Connecting......
+20:45:32.420 -> [WiFi] Connected
+20:45:32.889 -> [I2S] Ready
+20:45:32.889 -> [PMS7003] UART ready
+20:45:32.889 -> [System] Initialization complete.
+20:45:35.440 -> [HR] 43.8 | [SPO2] Initializing... | IR: 138756
+20:45:41.338 -> [SpO2] Discarded noisy reading.
+20:45:44.556 -> [HR] 76.0 | [SPO2] Initializing... | IR: 58677
+20:45:45.635 -> [HR] 89.0 | [SPO2] Initializing... | IR: 58752
+20:45:47.242 -> [HR] 118.0 | [SPO2] Initializing... | IR: 58735
+20:45:47.242 -> [HR] 88.2 | [SPO2] Initializing... | IR: 58559
+20:46:27.826 -> 
+20:46:27.826 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:46:27.826 -> [Audio] Capturing 3-second sample...
+20:46:30.804 -> [Audio] RMS Energy: 1808.73
+20:46:31.038 -> [Audio] Sending to cloud (attempt 1/3)...
+20:46:43.360 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9997993111610413,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:46:43.360 -> [Audio] Result: normal (Check: HF-ONLY)
+20:46:43.360 -> ├─ [Physio] Status: error | HR: 88.2 | SpO2: -1.0% | Audio: normal
+20:46:43.454 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 32/45/53 | T: 33.4 | H: 72.4
+20:46:43.454 -> └─ [OVERALL]: critical
+20:46:43.454 -> [Status] Updating device status (UPSERT)...
+20:46:44.580 -> [Status] Status Updated (HTTP 200)
+20:46:52.827 -> [HikOn] Booting...
+20:46:52.827 -> [WiFi] Connecting......
+20:46:55.557 -> [WiFi] Connected
+20:46:56.002 -> [I2S] Ready
+20:46:56.040 -> [PMS7003] UART ready
+20:46:56.040 -> [System] Initialization complete.
+20:46:59.305 -> [HR] 30.2 | [SPO2] Initializing... | IR: 59885
+20:46:59.820 -> [HR] 63.8 | [SPO2] Initializing... | IR: 59865
+20:47:17.362 -> [Accel] Upload failed (HTTP -1)
+20:47:19.490 -> [SpO2] Discarded noisy reading.
+20:47:22.519 -> [SpO2] Discarded noisy reading.
+20:47:24.556 -> [HR] 74.2 | [SPO2] Initializing... | IR: 60192
+20:47:24.556 -> [HR] 102.2 | [SPO2] Initializing... | IR: 60166
+20:47:24.940 -> [HR] 111.8 | [SPO2] Initializing... | IR: 60179
+20:47:25.996 -> [HR] 92.5 | [SPO2] Initializing... | IR: 60264
+20:47:26.453 -> [HR] 113.5 | [SPO2] Initializing... | IR: 60282
+20:47:27.454 -> [HR] 100.5 | [SPO2] Initializing... | IR: 60327
+20:47:28.507 -> [HR] 74.5 | [SPO2] Initializing... | IR: 60393
+20:47:29.102 -> [HR] 86.8 | [SPO2] Initializing... | IR: 60378
+20:47:31.813 -> [SpO2] Discarded noisy reading.
+20:47:32.684 -> [HR] 75.8 | [SPO2] Initializing... | IR: 60402
+20:47:33.202 -> [HR] 86.5 | [SPO2] Initializing... | IR: 60384
+20:47:33.724 -> [HR] 100.8 | [SPO2] Initializing... | IR: 60377
+20:47:34.336 -> [HR] 101.8 | [SPO2] Initializing... | IR: 60351
+20:47:34.791 -> [HR] 114.2 | [SPO2] Initializing... | IR: 60309
+20:47:35.766 -> [HR] 103.5 | [SPO2] Initializing... | IR: 60227
+20:47:36.342 -> [HR] 99.5 | [SPO2] Initializing... | IR: 60245
+20:47:36.765 -> [HR] 108.0 | [SPO2] Initializing... | IR: 60220
+20:47:37.363 -> [HR] 105.2 | [SPO2] Initializing... | IR: 60254
+20:47:37.892 -> [HR] 113.5 | [SPO2] Initializing... | IR: 60243
+20:47:38.458 -> [HR] 115.8 | [SPO2] Initializing... | IR: 60229
+20:47:38.932 -> [HR] 112.5 | [SPO2] Initializing... | IR: 60205
+20:47:39.411 -> [HR] 113.2 | [SPO2] Initializing... | IR: 60220
+20:47:42.666 -> [HR] 116.5 | [SPO2] 81.7% (Last Read) | IR: 60186
+20:47:43.130 -> [HR] 120.5 | [SPO2] 81.7% (Last Read) | IR: 60187
+20:47:43.658 -> [HR] 118.0 | [SPO2] 81.7% (Last Read) | IR: 60192
+20:47:44.139 -> [HR] 115.5 | [SPO2] 81.7% (Last Read) | IR: 60183
+20:47:44.737 -> [HR] 116.0 | [SPO2] 81.7% (Last Read) | IR: 60174
+20:47:45.728 -> [HR] 113.8 | [SPO2] 81.7% (Last Read) | IR: 60182
+20:47:45.728 -> [HR] 119.5 | [SPO2] 81.7% (Last Read) | IR: 60217
+20:47:47.537 -> [HR] 104.2 | [SPO2] 81.7% (Last Read) | IR: 60305
+20:47:47.537 -> [HR] 98.0 | [SPO2] 81.7% (Last Read) | IR: 60348
+20:47:48.221 -> [HR] 92.0 | [SPO2] 81.7% (Last Read) | IR: 60300
+20:47:48.716 -> [HR] 85.0 | [SPO2] 81.7% (Last Read) | IR: 60262
+20:47:52.157 -> 
+20:47:52.157 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:47:52.157 -> [Audio] Capturing 3-second sample...
+20:47:55.018 -> [Audio] RMS Energy: 1886.16
+20:47:55.304 -> [Audio] Sending to cloud (attempt 1/3)...
+20:47:57.998 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9996498823165894,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:47:57.998 -> [Audio] Result: normal (Check: HF-ONLY)
+20:47:57.998 -> ├─ [Physio] Status: critical | HR: 85.0 | SpO2: 83.7% | Audio: normal
+20:47:57.998 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 41/54/65 | T: 33.4 | H: 72.9
+20:47:57.998 -> └─ [OVERALL]: critical
+20:47:57.998 -> [Status] Updating device status (UPSERT)...
+20:47:58.624 -> [Status] Status Updated (HTTP 200)
+20:48:02.560 -> [SpO2] Discarded noisy reading.
+20:48:04.405 -> [HR] 95.5 | [SPO2] 83.7% (Last Read) | IR: 61378
+20:48:04.832 -> [HR] 100.0 | [SPO2] 83.7% (Last Read) | IR: 61328
+20:48:08.384 -> [HR] 92.0 | [SPO2] 83.7% (Last Read) | IR: 61458
+20:48:08.871 -> [HR] 97.2 | [SPO2] 83.7% (Last Read) | IR: 61445
+20:48:14.323 -> [HR] 90.0 | [SPO2] 82.3% (Last Read) | IR: 61068
+20:48:14.864 -> [HR] 91.5 | [SPO2] 82.3% (Last Read) | IR: 61052
+20:48:16.209 -> [HR] 88.5 | [SPO2] 82.3% (Last Read) | IR: 60806
+20:48:17.302 -> [HR] 67.8 | [SPO2] 82.3% (Last Read) | IR: 60796
+20:48:18.321 -> [HR] 66.0 | [SPO2] 82.3% (Last Read) | IR: 60814
+20:48:18.858 -> [HR] 67.2 | [SPO2] 82.3% (Last Read) | IR: 60768
+20:48:22.152 -> [SpO2] Discarded noisy reading.
+20:48:23.882 -> [HR] 67.5 | [SPO2] 82.3% (Last Read) | IR: 60561
+20:48:24.721 -> [HR] 72.0 | [SPO2] 82.3% (Last Read) | IR: 60538
+20:48:27.142 -> [HR] 83.0 | [SPO2] 82.3% (Last Read) | IR: 60812
+20:48:28.326 -> [HR] 68.2 | [SPO2] 82.3% (Last Read) | IR: 61146
+20:48:29.057 -> [HR] 75.8 | [SPO2] 82.3% (Last Read) | IR: 60986
+20:48:36.423 -> [HR] 73.2 | [SPO2] 84.0% (Last Read) | IR: 61571
+20:48:41.686 -> [SpO2] Discarded noisy reading.
+20:48:46.501 -> [HR] 58.2 | [SPO2] 84.0% (Last Read) | IR: 61607
+20:48:47.917 -> [HR] 55.2 | [SPO2] 84.0% (Last Read) | IR: 61433
+20:48:48.839 -> [HR] 53.0 | [SPO2] 84.0% (Last Read) | IR: 61236
+20:48:52.096 -> 
+20:48:52.096 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:48:52.096 -> [Audio] Capturing 3-second sample...
+20:48:55.002 -> [Audio] RMS Energy: 454.89
+20:48:55.274 -> [Audio] Sending to cloud (attempt 1/3)...
+20:48:57.707 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999990463256836,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:48:57.707 -> [Audio] Result: normal (Check: HF-ONLY)
+20:48:57.707 -> ├─ [Physio] Status: critical | HR: 53.0 | SpO2: 87.2% | Audio: normal
+20:48:57.707 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 41/54/66 | T: 33.4 | H: 73.0
+20:48:57.707 -> └─ [OVERALL]: critical
+20:48:57.746 -> [Status] Updating device status (UPSERT)...
+20:48:59.360 -> [Status] Status Updated (HTTP 200)
+20:49:02.886 -> [SpO2] Discarded noisy reading.
+20:49:09.009 -> [HR] 65.5 | [SPO2] 87.2% (Last Read) | IR: 58291
+20:49:09.500 -> [HR] 85.0 | [SPO2] 87.2% (Last Read) | IR: 58266
+20:49:10.109 -> [HR] 99.2 | [SPO2] 87.2% (Last Read) | IR: 58276
+20:49:10.681 -> [HR] 110.2 | [SPO2] 87.2% (Last Read) | IR: 58282
+20:49:14.590 -> [HR] 107.5 | [SPO2] 88.6% (Last Read) | IR: 58590
+20:49:17.244 -> [HR] 105.8 | [SPO2] 88.6% (Last Read) | IR: 58407
+20:49:17.244 -> [HR] 105.8 | [SPO2] 88.6% (Last Read) | IR: 58408
+20:49:19.135 -> [HR] 93.5 | [SPO2] 88.6% (Last Read) | IR: 58379
+20:49:19.135 -> [HR] 84.0 | [SPO2] 88.6% (Last Read) | IR: 58386
+20:49:19.685 -> [HR] 82.5 | [SPO2] 88.6% (Last Read) | IR: 58387
+20:49:20.376 -> [HR] 80.2 | [SPO2] 88.6% (Last Read) | IR: 58355
+20:49:22.928 -> [SpO2] Discarded noisy reading.
+20:49:24.465 -> [HR] 75.5 | [SPO2] 88.6% (Last Read) | IR: 58546
+20:49:25.725 -> [HR] 71.2 | [SPO2] 88.6% (Last Read) | IR: 58612
+20:49:26.854 -> [HR] 57.2 | [SPO2] 88.6% (Last Read) | IR: 58553
+20:49:27.682 -> [HR] 55.8 | [SPO2] 88.6% (Last Read) | IR: 58560
+20:49:28.541 -> [HR] 66.0 | [SPO2] 88.6% (Last Read) | IR: 58545
+20:49:29.453 -> [HR] 68.8 | [SPO2] 88.6% (Last Read) | IR: 58531
+20:49:30.752 -> [HR] 67.2 | [SPO2] 88.6% (Last Read) | IR: 58604
+20:49:32.929 -> [SpO2] Discarded noisy reading.
+20:49:34.702 -> [HR] 75.0 | [SPO2] 88.6% (Last Read) | IR: 58630
+20:49:35.411 -> [HR] 75.0 | [SPO2] 88.6% (Last Read) | IR: 58614
+20:49:39.216 -> [HR] 71.5 | [SPO2] 88.6% (Last Read) | IR: 58388
+20:49:40.602 -> [HR] 70.2 | [SPO2] 88.6% (Last Read) | IR: 66747
+20:49:43.191 -> [SpO2] Discarded noisy reading.
+20:49:47.838 -> [HR] 73.2 | [SPO2] 88.6% (Last Read) | IR: 59369
+20:49:50.509 -> [HR] 79.0 | [SPO2] 88.6% (Last Read) | IR: 59563
+20:49:52.776 -> [SpO2] Discarded noisy reading.
+20:49:52.813 -> 
+20:49:52.813 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:49:52.813 -> [Audio] Capturing 3-second sample...
+20:49:55.720 -> [Audio] RMS Energy: 2262.80
+20:49:56.040 -> [Audio] Sending to cloud (attempt 1/3)...
+20:49:59.029 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9997957348823547,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:49:59.029 -> [Audio] Result: normal (Check: HF-ONLY)
+20:49:59.076 -> ├─ [Physio] Status: safe | HR: 79.0 | SpO2: 88.6% | Audio: normal
+20:49:59.076 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 41/54/66 | T: 33.4 | H: 73.0
+20:49:59.076 -> └─ [OVERALL]: critical
+20:49:59.076 -> [Status] Updating device status (UPSERT)...
+20:50:02.825 -> [Status] Status Updated (HTTP 200)
+20:50:02.825 -> [SpO2] Discarded noisy reading.
+20:50:04.642 -> [HR] 92.8 | [SPO2] 88.6% (Last Read) | IR: 59260
+20:50:05.010 -> [HR] 123.2 | [SPO2] 88.6% (Last Read) | IR: 59257
+20:50:07.735 -> [HR] 108.8 | [SPO2] 88.6% (Last Read) | IR: 59352
+20:50:53.983 -> [HikOn] Booting...
+20:50:53.983 -> [WiFi] Connecting.....
+20:50:55.983 -> [WiFi] Connected
+20:50:56.497 -> [I2S] Ready
+20:50:56.497 -> [PMS7003] UART ready
+20:50:56.497 -> [System] Initialization complete.
+20:51:51.969 -> 
+20:51:51.969 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:51:51.969 -> [Audio] Capturing 3-second sample...
+20:51:55.399 -> [Audio] RMS Energy: 1068.30
+20:51:55.399 -> [Audio] Sending to cloud (attempt 1/3)...
+20:52:04.236 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999979734420776,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:52:04.236 -> [Audio] Result: normal (Check: HF-ONLY)
+20:52:04.236 -> ├─ [Physio] Status: error | HR: 0.0 | SpO2: -1.0% | Audio: normal
+20:52:04.236 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 34/48/65 | T: 33.4 | H: 73.2
+20:52:04.236 -> └─ [OVERALL]: critical
+20:52:04.281 -> [Status] Updating device status (UPSERT)...
+20:52:06.124 -> [Status] Status Updated (HTTP 200)
+20:52:51.993 -> 
+20:52:51.993 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:52:51.993 -> [Audio] Capturing 3-second sample...
+20:52:54.941 -> [Audio] RMS Energy: 8375.17
+20:52:55.207 -> [Audio] Sending to cloud (attempt 1/3)...
+20:53:16.177 -> [Audio] Cloud inference failed (HTTP -1)
+20:53:16.177 -> [Audio] Cloud may be waking up — waiting 30 sec before retry...
+20:53:46.141 -> [Audio] Sending to cloud (attempt 2/3)...
+20:53:49.655 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999657869338989,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:53:49.655 -> [Audio] Result: normal (Check: HF-ONLY)
+20:53:49.655 -> ├─ [Physio] Status: error | HR: 0.0 | SpO2: -1.0% | Audio: normal
+20:53:49.655 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 34/48/65 | T: 33.5 | H: 73.2
+20:53:49.655 -> └─ [OVERALL]: critical
+20:53:49.655 -> [Status] Updating device status (UPSERT)...
+20:53:50.582 -> [Status] Status Updated (HTTP 200)
+20:53:52.634 -> 
+20:53:52.634 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:53:52.634 -> [Audio] Capturing 3-second sample...
+20:53:55.881 -> [Audio] RMS Energy: 490.52
+20:53:55.881 -> [Audio] Sending to cloud (attempt 1/3)...
+20:54:16.994 -> [Audio] Cloud inference failed (HTTP -1)
+20:54:16.994 -> [Audio] Cloud may be waking up — waiting 30 sec before retry...
+20:54:47.002 -> [Audio] Sending to cloud (attempt 2/3)...
+20:54:49.514 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.999997615814209,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:54:49.514 -> [Audio] Result: normal (Check: HF-ONLY)
+20:54:49.514 -> ├─ [Physio] Status: error | HR: 0.0 | SpO2: -1.0% | Audio: normal
+20:54:49.514 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 34/48/65 | T: 33.5 | H: 73.4
+20:54:49.514 -> └─ [OVERALL]: critical
+20:54:49.514 -> [Status] Updating device status (UPSERT)...
+20:54:50.861 -> [Status] Status Updated (HTTP 200)
+20:54:54.285 -> 
+20:54:54.285 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:54:54.285 -> [Audio] Capturing 3-second sample...
+20:54:57.149 -> [Audio] RMS Energy: 4215.66
+20:54:57.447 -> [Audio] Sending to cloud (attempt 1/3)...
+20:55:03.108 -> [Audio] Full response: {"success":true,"inference":{"cough":1,"wheeze":0},"gemini_verified":true,"gemini_error":null,"scores":{"bg_noise":0.26586073637008667,"cough":0.7341392040252686,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:55:03.108 -> [Audio] Result: cough (Check: GEMINI VERIFIED)
+20:55:03.108 -> ├─ [Physio] Status: error | HR: 0.0 | SpO2: -1.0% | Audio: cough
+20:55:03.108 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 34/48/65 | T: 33.6 | H: 73.9
+20:55:03.108 -> └─ [OVERALL]: critical
+20:55:03.108 -> [Status] Updating device status (UPSERT)...

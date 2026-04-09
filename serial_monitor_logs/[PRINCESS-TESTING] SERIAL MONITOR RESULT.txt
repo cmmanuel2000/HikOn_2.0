@@ -1,0 +1,713 @@
+20:07:43.623 -> [HikOn] Booting...
+20:07:43.623 -> [WiFi] Connecting......
+20:07:46.223 -> [WiFi] Connected
+20:07:46.721 -> [I2S] Ready
+20:07:46.721 -> [PMS7003] UART ready
+20:07:46.721 -> [System] Initialization complete.
+20:07:50.374 -> [HR] 14.8 BPM (Stable) | IR: 91550
+20:07:50.874 -> [HR] 45.0 BPM (Stable) | IR: 91636
+20:07:51.537 -> [HR] 67.2 BPM (Stable) | IR: 91543
+20:07:53.893 -> [HR] 92.0 BPM (Stable) | IR: 91565
+20:07:55.252 -> [HR] 88.2 BPM (Stable) | IR: 91096
+20:07:56.187 -> [HR] 74.0 BPM (Stable) | IR: 90940
+20:07:56.673 -> [HR] 82.0 BPM (Stable) | IR: 91056
+20:07:57.302 -> [HR] 81.2 BPM (Stable) | IR: 90905
+20:07:58.367 -> [HR] 87.8 BPM (Stable) | IR: 91220
+20:07:58.994 -> [HR] 94.8 BPM (Stable) | IR: 91048
+20:08:06.174 -> [HR] 76.5 BPM (Stable) | IR: 91317
+20:08:06.896 -> [HR] 73.0 BPM (Stable) | IR: 91195
+20:08:08.081 -> [HR] 71.5 BPM (Stable) | IR: 91539
+20:08:09.156 -> [HR] 63.0 BPM (Stable) | IR: 91235
+20:08:09.633 -> [HR] 79.5 BPM (Stable) | IR: 91237
+20:08:10.245 -> [HR] 100.8 BPM (Stable) | IR: 91261
+20:08:11.215 -> [HR] 100.8 BPM (Stable) | IR: 91087
+20:08:14.948 -> [HR] 98.2 BPM (Stable) | IR: 90803
+20:08:15.464 -> [HR] 99.5 BPM (Stable) | IR: 90770
+20:08:17.924 -> [HR] 80.0 BPM (Stable) | IR: 90879
+20:08:19.181 -> [HR] 109.5 BPM (Stable) | IR: 90909
+20:08:19.181 -> [HR] 113.5 BPM (Stable) | IR: 90768
+20:08:19.923 -> [HR] 103.8 BPM (Stable) | IR: 90708
+20:08:20.762 -> [HR] 109.0 BPM (Stable) | IR: 90593
+20:08:21.258 -> [HR] 95.0 BPM (Stable) | IR: 90683
+20:08:24.482 -> [HR] 89.0 BPM (Stable) | IR: 90756
+20:08:25.171 -> [HR] 90.5 BPM (Stable) | IR: 90584
+20:08:26.039 -> [HR] 88.0 BPM (Stable) | IR: 90548
+20:08:26.330 -> [HR] 84.5 BPM (Stable) | IR: 90699
+20:08:27.536 -> [HR] 86.8 BPM (Stable) | IR: 91036
+20:08:30.023 -> [HR] 95.5 BPM (Stable) | IR: 90637
+20:08:30.669 -> [HR] 93.8 BPM (Stable) | IR: 90545
+20:08:31.154 -> [HR] 96.0 BPM (Stable) | IR: 90635
+20:08:33.458 -> [HR] 125.5 BPM (Stable) | IR: 90897
+20:08:34.370 -> [HR] 111.8 BPM (Stable) | IR: 90648
+20:08:34.744 -> [HR] 131.5 BPM (Stable) | IR: 90694
+20:08:35.663 -> [HR] 117.2 BPM (Stable) | IR: 90625
+20:08:36.117 -> [HR] 114.2 BPM (Stable) | IR: 90762
+20:08:37.006 -> [HR] 113.5 BPM (Stable) | IR: 9047620:08:38.733 -> [HR] 82.5 BPM (Stable) | IR: 90273
+20:08:39.832 -> [HR] 85.0 BPM (Stable) | IR: 90340
+20:08:40.848 -> [HR] 60.8 BPM (Stable) | IR: 90484
+20:08:41.465 -> [HR] 69.5 BPM (Stable) | IR: 90425
+20:08:41.747 -> 
+20:08:41.747 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:08:41.747 -> [Audio] Capturing 3-second sample...
+20:08:44.632 -> [Audio] RMS Energy: 1627.16
+20:08:44.930 -> [Audio] Sending to cloud (attempt 1/3)...
+20:08:49.686 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999464750289917,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:08:49.686 -> [Audio] Result: normal (Check: HF-ONLY)
+20:08:50.449 -> ├─ [Physio] Status: critical | HR: 69.5 | SpO2: 90.6% | Audio: normal
+20:08:50.449 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 27/40/53 | T: 32.3 | H: 66.6
+20:08:50.449 -> └─ [OVERALL]: critical
+20:08:50.449 -> [Status] Updating device status (UPSERT)...
+20:08:53.023 -> [Status] Status Updated (HTTP 200)
+20:09:00.617 -> [HR] 79.0 BPM (Stable) | IR: 90591
+20:09:01.113 -> [HR] 88.5 BPM (Stable) | IR: 90653
+20:09:02.338 -> [HR] 86.0 BPM (Stable) | IR: 90448
+20:09:03.777 -> [HR] 71.8 BPM (Stable) | IR: 90660
+20:09:04.162 -> [HR] 90.0 BPM (Stable) | IR: 90620
+20:09:06.883 -> [HR] 90.0 BPM (Stable) | IR: 90451
+20:09:07.261 -> [HR] 118.8 BPM (Stable) | IR: 90501
+20:09:11.378 -> [HR] 127.0 BPM (Stable) | IR: 90607
+20:09:11.922 -> [HR] 113.5 BPM (Stable) | IR: 90554
+20:09:13.021 -> [HR] 99.2 BPM (Stable) | IR: 90718
+20:09:13.615 -> [HR] 82.2 BPM (Stable) | IR: 90587
+20:09:16.999 -> [HR] 83.2 BPM (Stable) | IR: 90625
+20:09:18.517 -> [HR] 67.0 BPM (Stable) | IR: 90815
+20:09:19.016 -> [HR] 83.5 BPM (Stable) | IR: 90877
+20:09:19.477 -> [HR] 90.0 BPM (Stable) | IR: 90917
+20:09:20.311 -> [HR] 88.8 BPM (Stable) | IR: 90861
+20:09:20.796 -> [HR] 108.5 BPM (Stable) | IR: 90846
+20:09:21.265 -> [HR] 111.0 BPM (Stable) | IR: 90883
+20:09:22.639 -> [HR] 91.5 BPM (Stable) | IR: 91000
+20:09:23.142 -> [HR] 102.5 BPM (Stable) | IR: 91082
+20:09:27.744 -> [HR] 101.2 BPM (Stable) | IR: 91319
+20:09:28.648 -> [HR] 84.8 BPM (Stable) | IR: 90961
+20:09:29.043 -> [HR] 113.8 BPM (Stable) | IR: 90931
+20:09:30.903 -> [HR] 96.8 BPM (Stable) | IR: 91128
+20:09:30.903 -> [HR] 101.8 BPM (Stable) | IR: 91268
+20:09:31.182 -> [HR] 116.2 BPM (Stable) | IR: 91405
+20:09:32.480 -> [HR] 88.0 BPM (Stable) | IR: 91288
+20:09:33.366 -> [HR] 92.2 BPM (Stable) | IR: 91539
+20:09:35.966 -> [HR] 93.8 BPM (Stable) | IR: 91456
+20:09:36.646 -> [HR] 84.8 BPM (Stable) | IR: 91191
+20:09:37.029 -> [HR] 114.0 BPM (Stable) | IR: 91284
+20:09:38.194 -> [HR] 110.0 BPM (Stable) | IR: 91667
+20:09:39.049 -> [HR] 92.8 BPM (Stable) | IR: 91974
+20:09:39.892 -> [HR] 88.8 BPM (Stable) | IR: 91454
+20:09:40.461 -> [HR] 75.5 BPM (Stable) | IR: 91586
+20:09:41.624 -> [HR] 75.5 BPM (Stable) | IR: 91413
+20:09:41.734 -> 
+20:09:41.734 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:09:41.734 -> [Audio] Capturing 3-second sample...
+20:09:44.696 -> [Audio] RMS Energy: 1539.87
+20:09:44.955 -> [Audio] Sending to cloud (attempt 1/3)...
+20:09:58.896 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9765300750732422,"cough":0,"normal_breathing":0.02346627600491047,"talking":0,"wheeze":0}}
+20:09:58.896 -> [Audio] Result: normal (Check: HF-ONLY)
+20:09:59.652 -> ├─ [Physio] Status: safe | HR: 75.5 | SpO2: 94.0% | Audio: normal
+20:09:59.652 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 29/43/56 | T: 32.3 | H: 66.4
+20:09:59.652 -> └─ [OVERALL]: critical
+20:09:59.652 -> [Status] Updating device status (UPSERT)...
+20:10:00.934 -> [Status] Status Updated (HTTP 200)
+20:10:08.594 -> [HR] 78.0 BPM (Stable) | IR: 92077
+20:10:09.615 -> [HR] 79.8 BPM (Stable) | IR: 91532
+20:10:10.065 -> [HR] 73.0 BPM (Stable) | IR: 91797
+20:10:10.396 -> [HR] 103.5 BPM (Stable) | IR: 91828
+20:10:11.432 -> [HR] 113.0 BPM (Stable) | IR: 91679
+20:10:12.857 -> [HR] 104.0 BPM (Stable) | IR: 91659
+20:10:15.106 -> [HR] 105.0 BPM (Stable) | IR: 92194
+20:10:15.457 -> [HR] 102.8 BPM (Stable) | IR: 92411
+20:10:16.400 -> [HR] 89.2 BPM (Stable) | IR: 91991
+20:10:17.297 -> [HR] 103.2 BPM (Stable) | IR: 92192
+20:10:18.045 -> [HR] 100.2 BPM (Stable) | IR: 91821
+20:10:20.778 -> [HR] 75.0 BPM (Stable) | IR: 92200
+20:10:23.151 -> [HR] 80.5 BPM (Stable) | IR: 91677
+20:10:34.074 -> [Accel] Upload failed (HTTP -1)
+20:10:41.768 -> 
+20:10:41.768 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:10:41.768 -> [Audio] Capturing 3-second sample...
+20:10:44.727 -> [Audio] RMS Energy: 2082.68
+20:10:44.952 -> [Audio] Sending to cloud (attempt 1/3)...
+20:11:39.773 -> [HikOn] Booting...
+20:11:39.851 -> [WiFi] Connecting..........
+20:11:44.851 -> [WiFi] Connected
+20:11:45.334 -> [I2S] Ready
+20:11:45.334 -> [PMS7003] UART ready
+20:11:45.334 -> [System] Initialization complete.
+20:11:47.813 -> [HR] 28.5 BPM (Stable) | IR: 96274
+20:11:57.243 -> [HR] 64.5 BPM (Stable) | IR: 97422
+20:11:57.243 -> [HR] 89.8 BPM (Stable) | IR: 100378
+20:11:57.698 -> [HR] 120.0 BPM (Stable) | IR: 100300
+20:12:14.291 -> [HR] 116.0 BPM (Stable) | IR: 98154
+20:12:14.861 -> [HR] 103.0 BPM (Stable) | IR: 97972
+20:12:16.232 -> [HR] 88.8 BPM (Stable) | IR: 97448
+20:12:17.377 -> [HR] 71.8 BPM (Stable) | IR: 97605
+20:12:17.972 -> [HR] 73.5 BPM (Stable) | IR: 97520
+20:12:18.367 -> [HR] 85.8 BPM (Stable) | IR: 97688
+20:12:33.116 -> [HR] 88.5 BPM (Stable) | IR: 102207
+20:12:35.594 -> [HR] 97.2 BPM (Stable) | IR: 102587
+20:12:36.459 -> [HR] 88.8 BPM (Stable) | IR: 103287
+20:12:37.317 -> [HR] 71.0 BPM (Stable) | IR: 102829
+20:12:38.332 -> [HR] 75.5 BPM (Stable) | IR: 103210
+20:12:38.332 -> 
+20:12:38.332 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:12:38.332 -> [Audio] Capturing 3-second sample...
+20:12:41.347 -> [Audio] RMS Energy: 392.18
+20:12:41.519 -> [Audio] Sending to cloud (attempt 1/3)...
+20:12:45.154 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9998974800109863,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:12:45.154 -> [Audio] Result: normal (Check: HF-ONLY)
+20:12:45.896 -> ├─ [Physio] Status: critical | HR: 75.5 | SpO2: 91.2% | Audio: normal
+20:12:45.896 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 28/42/50 | T: 32.3 | H: 65.7
+20:12:45.896 -> └─ [OVERALL]: critical
+20:12:45.896 -> [Status] Updating device status (UPSERT)...
+20:12:53.575 -> [Status] Status Updated (HTTP 200)
+20:12:53.575 -> [HR] 79.2 BPM (Stable) | IR: 106357
+20:12:54.198 -> [HR] 100.2 BPM (Stable) | IR: 106348
+20:12:54.595 -> [HR] 118.0 BPM (Stable) | IR: 106344
+20:12:55.399 -> [HR] 119.5 BPM (Stable) | IR: 106046
+20:12:55.987 -> [HR] 116.8 BPM (Stable) | IR: 106473
+20:12:56.702 -> [HR] 105.5 BPM (Stable) | IR: 106184
+20:12:57.183 -> [HR] 107.0 BPM (Stable) | IR: 106100
+20:12:57.793 -> [HR] 110.0 BPM (Stable) | IR: 106420
+20:12:58.375 -> [HR] 112.0 BPM (Stable) | IR: 106557
+20:12:59.213 -> [HR] 102.2 BPM (Stable) | IR: 106543
+20:13:04.262 -> [HR] 83.8 BPM (Stable) | IR: 106535
+20:13:04.901 -> [HR] 101.8 BPM (Stable) | IR: 106495
+20:13:05.824 -> [HR] 99.5 BPM (Stable) | IR: 106500
+20:13:07.785 -> [HR] 120.5 BPM (Stable) | IR: 106352
+20:13:08.151 -> [HR] 140.0 BPM (Stable) | IR: 106400
+20:13:09.637 -> [HR] 109.2 BPM (Stable) | IR: 106995
+20:13:12.012 -> [HR] 111.0 BPM (Stable) | IR: 106677
+20:13:12.949 -> [HR] 88.0 BPM (Stable) | IR: 106590
+20:13:13.428 -> [HR] 80.0 BPM (Stable) | IR: 106495
+20:13:14.540 -> [HR] 83.8 BPM (Stable) | IR: 106503
+20:13:15.391 -> [HR] 86.2 BPM (Stable) | IR: 106602
+20:13:15.970 -> [HR] 97.5 BPM (Stable) | IR: 106665
+20:13:16.769 -> [HR] 85.8 BPM (Stable) | IR: 106403
+20:13:18.151 -> [HR] 85.5 BPM (Stable) | IR: 106572
+20:13:18.717 -> [HR] 84.8 BPM (Stable) | IR: 106685
+20:13:19.266 -> [HR] 84.2 BPM (Stable) | IR: 106777
+20:13:23.000 -> [HR] 91.2 BPM (Stable) | IR: 106666
+20:13:23.516 -> [HR] 105.8 BPM (Stable) | IR: 106686
+20:13:25.067 -> [HR] 91.0 BPM (Stable) | IR: 106775
+20:13:26.473 -> [HR] 75.0 BPM (Stable) | IR: 106911
+20:13:27.839 -> [HR] 72.2 BPM (Stable) | IR: 106702
+20:13:29.579 -> [HR] 55.8 BPM (Stable) | IR: 106848
+20:13:29.579 -> [HR] 61.5 BPM (Stable) | IR: 106794
+20:13:32.858 -> [HR] 69.2 BPM (Stable) | IR: 106534
+20:13:33.908 -> [HR] 70.0 BPM (Stable) | IR: 106364
+20:13:33.908 -> [HR] 98.2 BPM (Stable) | IR: 106410
+20:13:35.312 -> [HR] 100.5 BPM (Stable) | IR: 105770
+20:13:37.802 -> [HR] 95.5 BPM (Stable) | IR: 106034
+20:13:38.269 -> [HR] 106.8 BPM (Stable) | IR: 106106
+20:13:38.337 -> 
+20:13:38.337 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:13:38.337 -> [Audio] Capturing 3-second sample...
+20:13:41.272 -> [Audio] RMS Energy: 1952.07
+20:13:41.552 -> [Audio] Sending to cloud (attempt 1/3)...
+20:13:45.086 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9931533336639404,"cough":0,"normal_breathing":0.0068320780992507935,"talking":0,"wheeze":0}}
+20:13:45.086 -> [Audio] Result: normal (Check: HF-ONLY)
+20:13:45.831 -> ├─ [Physio] Status: error | HR: 106.8 | SpO2: 0.0% | Audio: normal
+20:13:45.831 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 26/40/46 | T: 32.3 | H: 65.3
+20:13:45.831 -> └─ [OVERALL]: critical
+20:13:45.831 -> [Status] Updating device status (UPSERT)...
+20:13:47.024 -> [Status] Status Updated (HTTP 200)
+20:13:49.758 -> [HR] 88.0 BPM (Stable) | IR: 106796
+20:13:50.468 -> [HR] 100.0 BPM (Stable) | IR: 106716
+20:13:51.699 -> [HR] 98.8 BPM (Stable) | IR: 106121
+20:13:52.294 -> [HR] 90.2 BPM (Stable) | IR: 106235
+20:13:52.988 -> [HR] 90.2 BPM (Stable) | IR: 105933
+20:13:55.446 -> [HR] 72.2 BPM (Stable) | IR: 105587
+20:13:55.446 -> [HR] 73.2 BPM (Stable) | IR: 106650
+20:13:55.912 -> [HR] 80.5 BPM (Stable) | IR: 106859
+20:13:56.549 -> [HR] 103.5 BPM (Stable) | IR: 106917
+20:14:01.165 -> [HR] 104.2 BPM (Stable) | IR: 106031
+20:14:01.685 -> [HR] 119.8 BPM (Stable) | IR: 105660
+20:14:02.540 -> [HR] 104.8 BPM (Stable) | IR: 104803
+20:14:03.031 -> [HR] 91.0 BPM (Stable) | IR: 105299
+20:14:05.320 -> [HR] 109.0 BPM (Stable) | IR: 104306
+20:14:23.480 -> [HR] 114.0 BPM (Stable) | IR: 103927
+20:14:23.480 -> [HR] 115.5 BPM (Stable) | IR: 101445
+20:14:23.935 -> [HR] 119.5 BPM (Stable) | IR: 101540
+20:14:24.773 -> [HR] 105.2 BPM (Stable) | IR: 100947
+20:14:25.099 -> [HR] 117.2 BPM (Stable) | IR: 100728
+20:14:26.242 -> [HR] 111.0 BPM (Stable) | IR: 100940
+20:14:26.666 -> [HR] 110.2 BPM (Stable) | IR: 100787
+20:14:32.081 -> [HR] 131.0 BPM (Stable) | IR: 102233
+20:14:32.564 -> [HR] 114.5 BPM (Stable) | IR: 102733
+20:14:33.739 -> [HR] 114.0 BPM (Stable) | IR: 104558
+20:14:34.665 -> [HR] 96.0 BPM (Stable) | IR: 104889
+20:14:35.342 -> [HR] 80.2 BPM (Stable) | IR: 104323
+20:14:36.480 -> [HR] 67.2 BPM (Stable) | IR: 103395
+20:14:37.652 -> [HR] 67.0 BPM (Stable) | IR: 103286
+20:14:39.736 -> 
+20:14:39.736 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:14:39.736 -> [Audio] Capturing 3-second sample...
+20:14:42.646 -> [Audio] RMS Energy: 519.91
+20:14:42.920 -> [Audio] Sending to cloud (attempt 1/3)...
+20:14:58.286 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9995916485786438,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:14:58.286 -> [Audio] Result: normal (Check: HF-ONLY)
+20:14:59.030 -> ├─ [Physio] Status: critical | HR: 67.0 | SpO2: 73.3% | Audio: normal
+20:14:59.030 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 26/40/46 | T: 32.4 | H: 65.2
+20:14:59.030 -> └─ [OVERALL]: critical
+20:14:59.030 -> [Status] Updating device status (UPSERT)...
+20:15:00.421 -> [Status] Status Updated (HTTP 200)
+20:15:03.712 -> [HR] 87.5 BPM (Stable) | IR: 98207
+20:15:06.218 -> [HR] 97.2 BPM (Stable) | IR: 97663
+20:15:11.521 -> [HR] 107.0 BPM (Stable) | IR: 98738
+20:15:14.405 -> [HR] 119.2 BPM (Stable) | IR: 98440
+20:15:21.415 -> [HR] 108.2 BPM (Stable) | IR: 100874
+20:15:40.019 -> 
+20:15:40.019 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:15:40.019 -> [Audio] Capturing 3-second sample...
+20:15:42.586 -> [Audio] RMS Energy: 673.54
+20:15:42.869 -> [Audio] Sending to cloud (attempt 1
+3)...
+20:15:49.697 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9407210350036621,"cough":0.0592782162129879,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:15:49.697 -> [Audio] Result: normal (Check: HF-ONLY)
+20:15:50.449 -> ├─ [Physio] Status: critical | HR: 108.2 | SpO2: 81.0% | Audio: normal
+20:15:50.449 -> ├─ [Enviro] Status: critical | PM1/2.5/10: 26/40/46 | T: 32.3 | H: 65.0
+20:15:50.449 -> └─ [OVERALL]: critical
+20:15:50.449 -> [Status] Updating device status (UPSERT)...
+20:15:51.345 -> [Status] Status Updated (HTTP 200)
+20:15:57.350 -> [HR] 94.2 BPM (Stable) | IR: 98610
+20:15:58.067 -> [HR] 89.2 BPM (Stable) | IR: 98229
+20:15:59.443 -> [HR] 86.0 BPM (Stable) | IR: 98278
+20:16:08.137 -> [HR] 87.5 BPM (Stable) | IR: 100259
+20:16:22.181 -> [HR] 85.8 BPM (Stable) | IR: 97055
+20:16:22.666 -> [HR] 97.2 BPM (Stable) | IR: 97112
+20:16:26.045 -> [HR] 94.0 BPM (Stable) | IR: 96804
+20:16:29.210 -> [HR] 104.2 BPM (Stable) | IR: 97513
+20:16:30.295 -> [HR] 100.5 BPM (Stable) | IR: 96507
+20:16:31.605 -> [HR] 79.8 BPM (Stable) | IR: 98347
+20:16:32.956 -> [HR] 72.5 BPM (Stable) | IR: 96563
+20:17:55.081 -> [HikOn] Booting...
+20:17:55.154 -> [WiFi] Connecting.......
+20:17:58.639 -> [WiFi] Connected
+20:17:59.127 -> [I2S] Ready
+20:17:59.127 -> [PMS7003] UART ready
+20:17:59.127 -> [System] Initialization complete.
+20:18:09.808 -> [HR] 23.5 BPM (Stable) | IR: 89578
+20:18:10.324 -> [HR] 52.0 BPM (Stable) | IR: 89479
+20:18:36.001 -> [HikOn] Booting...
+20:18:36.039 -> [WiFi] Connecting............
+20:18:42.040 -> [WiFi] Connected
+20:18:42.546 -> [I2S] Ready
+20:18:42.546 -> [PMS7003] UART ready
+20:18:42.546 -> [System] Initialization complete.
+20:18:50.905 -> [HR] 24.0 BPM (Stable) | IR: 92488
+20:18:50.905 -> [HR] 34.0 BPM (Stable) | IR: 92261
+20:18:53.167 -> [HR] 45.8 BPM (Stable) | IR: 92385
+20:18:53.167 -> [HR] 66.2 BPM (Stable) | IR: 92434
+20:18:54.281 -> [HR] 58.2 BPM (Stable) | IR: 92904
+20:19:00.704 -> [HR] 62.5 BPM (Stable) | IR: 92762
+20:19:01.612 -> [HR] 67.5 BPM (Stable) | IR: 92716
+20:19:02.693 -> [HR] 60.8 BPM (Stable) | IR: 92729
+20:19:03.743 -> [HR] 58.8 BPM (Stable) | IR: 92812
+20:19:04.410 -> [HR] 66.8 BPM (Stable) | IR: 92896
+20:19:20.720 -> [HR] 66.8 BPM (Stable) | IR: 90447
+20:19:21.346 -> [HR] 77.5 BPM (Stable) | IR: 90438
+20:19:21.770 -> [HR] 97.8 BPM (Stable) | IR: 90393
+20:19:22.912 -> [HR] 88.5 BPM (Stable) | IR: 90604
+20:19:34.924 -> 
+20:19:34.924 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:19:34.924 -> [Audio] Capturing 3-second sample...
+20:19:37.816 -> [Audio] RMS Energy: 2775.51
+20:19:38.107 -> [Audio] Sending to cloud (attempt 1/3)...
+20:19:44.400 -> [HikOn] Booting...
+20:19:44.442 -> [WiFi] Connecting.....
+20:19:46.933 -> [WiFi] Connected
+20:19:47.401 -> [I2S] Ready
+20:19:47.401 -> [PMS7003] UART ready
+20:19:47.401 -> [System] Initialization complete.
+20:20:44.381 -> [HikOn] Booting...
+20:20:44.399 -> [WiFi] Connecting......
+20:20:47.383 -> [WiFi] Connected
+20:20:47.883 -> [I2S] Ready
+20:20:47.883 -> [PMS7003] UART ready
+20:20:47.883 -> [System] Initialization complete.
+20:20:50.395 -> [HR] 37.8 BPM (Stable) | IR: 91061
+20:20:51.008 -> [HR] 61.5 BPM (Stable) | IR: 91183
+20:20:52.170 -> [HR] 74.2 BPM (Stable) | IR: 91207
+20:20:55.964 -> [HR] 97.0 BPM (Stable) | IR: 90678
+20:20:56.110 -> [HR] 93.5 BPM (Stable) | IR: 90645
+20:20:57.113 -> [HR] 84.8 BPM (Stable) | IR: 90602
+20:20:57.797 -> [HR] 93.8 BPM (Stable) | IR: 90564
+20:20:58.722 -> [HR] 86.8 BPM (Stable) | IR: 90531
+20:21:09.739 -> [HR] 62.5 BPM (Stable) | IR: 90274
+20:21:16.822 -> [HR] 59.5 BPM (Stable) | IR: 91594
+20:21:17.550 -> [HR] 58.0 BPM (Stable) | IR: 91499
+20:21:18.263 -> [HR] 79.0 BPM (Stable) | IR: 91374
+20:21:18.611 -> [HR] 113.2 BPM (Stable) | IR: 91408
+20:21:19.737 -> [HR] 117.5 BPM (Stable) | IR: 91326
+20:21:20.818 -> [HR] 111.0 BPM (Stable) | IR: 91171
+20:21:21.390 -> [HR] 100.5 BPM (Stable) | IR: 91193
+20:21:22.133 -> [HR] 76.8 BPM (Stable) | IR: 91247
+20:21:22.821 -> [HR] 82.0 BPM (Stable) | IR: 91181
+20:21:25.316 -> [HR] 92.8 BPM (Stable) | IR: 91180
+20:21:25.919 -> [HR] 90.2 BPM (Stable) | IR: 91208
+20:21:26.607 -> [HR] 92.8 BPM (Stable) | IR: 91186
+20:21:27.232 -> [HR] 95.8 BPM (Stable) | IR: 91183
+20:21:27.789 -> [HR] 96.2 BPM (Stable) | IR: 91224
+20:21:29.124 -> [HR] 83.8 BPM (Stable) | IR: 91167
+20:21:29.688 -> [HR] 86.5 BPM (Stable) | IR: 91141
+20:21:30.381 -> [HR] 83.5 BPM (Stable) | IR: 91120
+20:21:30.895 -> [HR] 87.0 BPM (Stable) | IR: 91068
+20:21:31.311 -> [HR] 112.5 BPM (Stable) | IR: 91114
+20:21:32.229 -> [HR] 103.0 BPM (Stable) | IR: 91129
+20:21:36.423 -> [HR] 110.8 BPM (Stable) | IR: 91298
+20:21:38.887 -> [HR] 109.0 BPM (Stable) | IR: 91297
+20:21:41.338 -> [HR] 91.2 BPM (Stable) | IR: 91173
+20:21:41.839 -> [HR] 103.0 BPM (Stable) | IR: 91138
+20:21:42.484 -> [HR] 97.2 BPM (Stable) | IR: 91146
+20:21:42.920 -> 
+20:21:42.920 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:21:42.920 -> [Audio] Capturing 3-second sample...
+20:21:45.792 -> [Audio] RMS Energy: 2088.05
+20:21:46.116 -> [Audio] Sending to cloud (attempt 1/3)...
+20:21:50.809 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999998807907104,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:21:50.809 -> [Audio] Result: normal (Check: HF-ONLY)
+20:21:51.556 -> ├─ [Physio] Status: critical | HR: 97.2 | SpO2: 87.3% | Audio: normal
+20:21:51.556 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/20/20 | T: 31.9 | H: 67.2
+20:21:51.556 -> └─ [OVERALL]: critical
+20:21:51.556 -> [Status] Updating device status (UPSERT)...
+20:21:54.026 -> [Status] Status Updated (HTTP 200)
+20:22:00.282 -> [HR] 87.0 BPM (Stable) | IR: 91703
+20:22:00.988 -> [HR] 90.2 BPM (Stable) | IR: 91677
+20:22:01.422 -> [HR] 95.0 BPM (Stable) | IR: 91666
+20:22:02.218 -> [HR] 90.0 BPM (Stable) | IR: 91708
+20:22:02.834 -> [HR] 97.5 BPM (Stable) | IR: 91721
+20:22:03.597 -> [HR] 94.2 BPM (Stable) | IR: 91721
+20:22:04.036 -> [HR] 96.5 BPM (Stable) | IR: 91716
+20:22:04.601 -> [HR] 104.2 BPM (Stable) | IR: 91710
+20:22:05.335 -> [HR] 101.0 BPM (Stable) | IR: 91582
+20:22:08.648 -> [HR] 101.0 BPM (Stable) | IR: 91619
+20:22:09.189 -> [HR] 96.2 BPM (Stable) | IR: 91607
+20:22:09.717 -> [HR] 96.5 BPM (Stable) | IR: 91641
+20:22:10.244 -> [HR] 103.8 BPM (Stable) | IR: 91680
+20:22:11.198 -> [HR] 100.2 BPM (Stable) | IR: 91603
+20:22:12.427 -> [HR] 94.0 BPM (Stable) | IR: 91601
+20:22:13.726 -> [HR] 79.0 BPM (Stable) | IR: 91470
+20:22:14.192 -> [HR] 83.2 BPM (Stable) | IR: 91441
+20:22:17.404 -> [HR] 85.8 BPM (Stable) | IR: 91497
+20:22:18.543 -> [HR] 106.0 BPM (Stable) | IR: 91519
+20:22:18.543 -> [HR] 112.5 BPM (Stable) | IR: 91578
+20:22:19.396 -> [HR] 98.2 BPM (Stable) | IR: 91531
+20:22:20.484 -> [HR] 99.8 BPM (Stable) | IR: 91565
+20:22:22.137 -> [HR] 83.0 BPM (Stable) | IR: 91547
+20:22:22.137 -> [HR] 78.0 BPM (Stable) | IR: 91480
+20:22:24.079 -> [HR] 97.8 BPM (Stable) | IR: 91537
+20:22:28.970 -> [HR] 95.8 BPM (Stable) | IR: 91454
+20:22:28.970 -> [HR] 84.2 BPM (Stable) | IR: 91644
+20:22:29.533 -> [HR] 99.8 BPM (Stable) | IR: 91648
+20:22:30.372 -> [HR] 79.8 BPM (Stable) | IR: 91571
+20:22:30.848 -> [HR] 93.0 BPM (Stable) | IR: 91560
+20:22:31.494 -> [HR] 99.2 BPM (Stable) | IR: 91604
+20:22:32.449 -> [HR] 87.8 BPM (Stable) | IR: 91585
+20:22:32.789 -> [HR] 108.8 BPM (Stable) | IR: 91575
+20:22:34.028 -> [HR] 97.8 BPM (Stable) | IR: 91622
+20:22:34.028 -> [HR] 104.0 BPM (Stable) | IR: 91618
+20:22:34.719 -> [HR] 109.0 BPM (Stable) | IR: 91621
+20:22:35.359 -> [HR] 93.8 BPM (Stable) | IR: 91592
+20:22:37.335 -> [HR] 113.8 BPM (Stable) | IR: 91520
+20:22:37.825 -> [HR] 123.0 BPM (Stable) | IR: 91490
+20:22:38.647 -> [HR] 116.8 BPM (Stable) | IR: 91409
+20:22:39.726 -> [HR] 107.2 BPM (Stable) | IR: 91415
+20:22:40.456 -> [HR] 87.5 BPM (Stable) | IR: 91398
+20:22:40.981 -> [HR] 80.5 BPM (Stable) | IR: 91374
+20:22:41.660 -> [HR] 87.5 BPM (Stable) | IR: 91431
+20:22:42.342 -> [HR] 93.5 BPM (Stable) | IR: 91423
+20:22:42.967 -> [HR] 100.2 BPM (Stable) | IR: 91450
+20:22:42.967 -> 
+20:22:42.967 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:22:42.967 -> [Audio] Capturing 3-second sample...
+20:22:45.804 -> [Audio] RMS Energy: 768.72
+20:22:46.084 -> [Audio] Sending to cloud (attempt 1/3)...
+20:22:48.249 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999706745147705,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:22:48.249 -> [Audio] Result: normal (Check: HF-ONLY)
+20:22:48.999 -> ├─ [Physio] Status: critical | HR: 100.2 | SpO2: 84.9% | Audio: normal
+20:22:48.999 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 31.9 | H: 66.6
+20:22:48.999 -> └─ [OVERALL]: critical
+20:22:48.999 -> [Status] Updating device status (UPSERT)...
+20:22:51.069 -> [Status] Status Updated (HTTP 200)
+20:22:54.756 -> [HR] 91.2 BPM (Stable) | IR: 91498
+20:22:55.294 -> [HR] 97.5 BPM (Stable) | IR: 91553
+20:22:55.869 -> [HR] 102.5 BPM (Stable) | IR: 91574
+20:22:56.525 -> [HR] 98.8 BPM (Stable) | IR: 91528
+20:22:57.121 -> [HR] 104.5 BPM (Stable) | IR: 91520
+20:22:57.832 -> [HR] 94.8 BPM (Stable) | IR: 91422
+20:22:58.199 -> [HR] 110.5 BPM (Stable) | IR: 91468
+20:22:58.898 -> [HR] 109.5 BPM (Stable) | IR: 91559
+20:22:59.738 -> [HR] 99.8 BPM (Stable) | IR: 91484
+20:23:01.289 -> [HR] 102.8 BPM (Stable) | IR: 91668
+20:23:01.289 -> [HR] 85.0 BPM (Stable) | IR: 91592
+20:23:01.725 -> [HR] 102.8 BPM (Stable) | IR: 91623
+20:23:04.475 -> [HR] 106.5 BPM (Stable) | IR: 91747
+20:23:05.006 -> [HR] 110.8 BPM (Stable) | IR: 91637
+20:23:05.494 -> [HR] 119.2 BPM (Stable) | IR: 91608
+20:23:06.127 -> [HR] 102.5 BPM (Stable) | IR: 91647
+20:23:06.874 -> [HR] 101.0 BPM (Stable) | IR: 91625
+20:23:07.377 -> [HR] 105.5 BPM (Stable) | IR: 91641
+20:23:08.471 -> [HR] 101.0 BPM (Stable) | IR: 91604
+20:23:08.471 -> [HR] 106.5 BPM (Stable) | IR: 91655
+20:23:09.119 -> [HR] 108.2 BPM (Stable) | IR: 91723
+20:23:09.733 -> [HR] 101.8 BPM (Stable) | IR: 91762
+20:23:10.277 -> [HR] 104.0 BPM (Stable) | IR: 91803
+20:23:11.492 -> [HR] 87.5 BPM (Stable) | IR: 91629
+20:23:12.137 -> [HR] 88.8 BPM (Stable) | IR: 91629
+20:23:14.508 -> [HR] 88.8 BPM (Stable) | IR: 91623
+20:23:15.186 -> [HR] 81.8 BPM (Stable) | IR: 91503
+20:23:15.560 -> [HR] 110.5 BPM (Stable) | IR: 91506
+20:23:16.122 -> [HR] 117.8 BPM (Stable) | IR: 91550
+20:23:17.016 -> [HR] 108.8 BPM (Stable) | IR: 91689
+20:23:17.517 -> [HR] 116.2 BPM (Stable) | IR: 91650
+20:23:18.135 -> [HR] 99.0 BPM (Stable) | IR: 91686
+20:23:19.425 -> [HR] 88.5 BPM (Stable) | IR: 91732
+20:23:19.425 -> [HR] 102.8 BPM (Stable) | IR: 91678
+20:23:20.506 -> [HR] 92.2 BPM (Stable) | IR: 91780
+20:23:21.111 -> [HR] 94.0 BPM (Stable) | IR: 91728
+20:23:21.808 -> [HR] 94.5 BPM (Stable) | IR: 91783
+20:23:24.189 -> [HR] 101.5 BPM (Stable) | IR: 91721
+20:23:24.941 -> [HR] 102.2 BPM (Stable) | IR: 91755
+20:23:25.480 -> [HR] 104.5 BPM (Stable) | IR: 91682
+20:23:26.103 -> [HR] 108.0 BPM (Stable) | IR: 91777
+20:23:26.528 -> [HR] 105.0 BPM (Stable) | IR: 91787
+20:23:27.988 -> [HR] 95.5 BPM (Stable) | IR: 91749
+20:23:28.898 -> [HR] 89.8 BPM (Stable) | IR: 91849
+20:23:30.140 -> [HR] 78.0 BPM (Stable) | IR: 91673
+20:23:30.619 -> [HR] 75.2 BPM (Stable) | IR: 91780
+20:23:31.301 -> [HR] 86.8 BPM (Stable) | IR: 91870
+20:23:32.272 -> [HR] 86.5 BPM (Stable) | IR: 91813
+20:23:35.436 -> [HR] 95.2 BPM (Stable) | IR: 91688
+20:23:35.955 -> [HR] 91.2 BPM (Stable) | IR: 91676
+20:23:36.351 -> [HR] 108.0 BPM (Stable) | IR: 91687
+20:23:37.130 -> [HR] 106.0 BPM (Stable) | IR: 91782
+20:23:38.145 -> [HR] 106.2 BPM (Stable) | IR: 91801
+20:23:38.649 -> [HR] 108.5 BPM (Stable) | IR: 91836
+20:23:39.255 -> [HR] 93.8 BPM (Stable) | IR: 91807
+20:23:39.654 -> [HR] 113.0 BPM (Stable) | IR: 91755
+20:23:40.883 -> [HR] 114.8 BPM (Stable) | IR: 91803
+20:23:40.883 -> [HR] 112.5 BPM (Stable) | IR: 91853
+20:23:41.237 -> [HR] 129.2 BPM (Stable) | IR: 91810
+20:23:41.853 -> [HR] 114.2 BPM (Stable) | IR: 91886
+20:23:42.250 -> [HR] 134.5 BPM (Stable) | IR: 91905
+20:23:43.213 -> 
+20:23:43.213 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:23:43.213 -> [Audio] Capturing 3-second sample...
+20:23:46.108 -> [Audio] RMS Energy: 2284.00
+20:23:46.401 -> [Audio] Sending to cloud (attempt 1/3)...
+20:23:58.654 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9994953870773315,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:23:58.654 -> [Audio] Result: normal (Check: HF-ONLY)
+20:23:59.374 -> ├─ [Physio] Status: critical | HR: 134.5 | SpO2: 87.2% | Audio: normal
+20:23:59.374 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 31.9 | H: 67.6
+20:23:59.374 -> └─ [OVERALL]: critical
+20:23:59.408 -> [Status] Updating device status (UPSERT)...
+20:24:01.626 -> [Status] Status Updated (HTTP 200)
+20:24:04.307 -> [HR] 136.0 BPM (Stable) | IR: 91818
+20:24:04.778 -> [HR] 129.5 BPM (Stable) | IR: 91756
+20:24:05.019 -> [HR] 150.0 BPM (Stable) | IR: 91731
+20:24:05.426 -> [HR] 145.8 BPM (Stable) | IR: 91726
+20:24:06.008 -> [HR] 143.5 BPM (Stable) | IR: 91750
+20:24:06.587 -> [HR] 135.5 BPM (Stable) | IR: 91782
+20:24:07.093 -> [HR] 120.5 BPM (Stable) | IR: 91832
+20:24:07.954 -> [HR] 98.5 BPM (Stable) | IR: 91838
+20:24:08.529 -> [HR] 98.5 BPM (Stable) | IR: 91893
+20:24:08.971 -> [HR] 107.5 BPM (Stable) | IR: 91891
+20:24:09.796 -> [HR] 96.0 BPM (Stable) | IR: 91974
+20:24:10.258 -> [HR] 113.0 BPM (Stable) | IR: 91945
+20:24:11.460 -> [HR] 113.2 BPM (Stable) | IR: 92635
+20:24:11.460 -> [HR] 100.2 BPM (Stable) | IR: 92151
+20:24:12.290 -> [HR] 109.0 BPM (Stable) | IR: 92086
+20:24:14.487 -> [HR] 108.8 BPM (Stable) | IR: 92082
+20:24:14.925 -> [HR] 114.5 BPM (Stable) | IR: 92206
+20:24:15.653 -> [HR] 127.2 BPM (Stable) | IR: 92139
+20:24:16.363 -> [HR] 121.2 BPM (Stable) | IR: 92312
+20:24:17.515 -> [HR] 100.8 BPM (Stable) | IR: 92014
+20:24:18.390 -> [HR] 85.5 BPM (Stable) | IR: 92089
+20:24:18.962 -> [HR] 76.8 BPM (Stable) | IR: 92098
+20:24:19.406 -> [HR] 88.5 BPM (Stable) | IR: 92160
+20:24:20.282 -> [HR] 93.0 BPM (Stable) | IR: 92216
+20:24:20.763 -> [HR] 105.0 BPM (Stable) | IR: 92172
+20:24:21.429 -> [HR] 101.0 BPM (Stable) | IR: 92186
+20:24:21.977 -> [HR] 96.8 BPM (Stable) | IR: 92192
+20:24:23.358 -> [HR] 90.0 BPM (Stable) | IR: 92180
+20:24:23.846 -> [HR] 92.5 BPM (Stable) | IR: 92146
+20:24:24.509 -> [HR] 92.2 BPM (Stable) | IR: 92157
+20:24:25.212 -> [HR] 86.2 BPM (Stable) | IR: 92143
+20:24:25.786 -> [HR] 100.0 BPM (Stable) | IR: 92140
+20:24:26.405 -> [HR] 93.8 BPM (Stable) | IR: 92178
+20:24:27.135 -> [HR] 92.0 BPM (Stable) | IR: 92218
+20:24:27.851 -> [HR] 90.2 BPM (Stable) | IR: 92245
+20:24:29.041 -> [HR] 98.0 BPM (Stable) | IR: 92249
+20:24:29.041 -> [HR] 95.0 BPM (Stable) | IR: 92306
+20:24:30.929 -> [HR] 87.0 BPM (Stable) | IR: 92217
+20:24:30.929 -> [HR] 87.0 BPM (Stable) | IR: 92270
+20:24:31.459 -> [HR] 86.2 BPM (Stable) | IR: 92324
+20:24:32.314 -> [HR] 92.0 BPM (Stable) | IR: 92372
+20:24:34.430 -> [HR] 117.5 BPM (Stable) | IR: 92286
+20:24:35.234 -> [HR] 116.2 BPM (Stable) | IR: 92345
+20:24:35.664 -> [HR] 116.2 BPM (Stable) | IR: 92362
+20:24:36.442 -> [HR] 133.8 BPM (Stable) | IR: 92341
+20:24:36.442 -> [HR] 129.8 BPM (Stable) | IR: 92323
+20:24:37.018 -> [HR] 138.2 BPM (Stable) | IR: 92344
+20:24:37.656 -> [HR] 129.5 BPM (Stable) | IR: 92379
+20:24:38.351 -> [HR] 105.8 BPM (Stable) | IR: 92377
+20:24:38.934 -> [HR] 97.2 BPM (Stable) | IR: 92305
+20:24:39.543 -> [HR] 95.0 BPM (Stable) | IR: 92319
+20:24:40.132 -> [HR] 96.2 BPM (Stable) | IR: 92352
+20:24:40.855 -> [HR] 95.2 BPM (Stable) | IR: 92347
+20:24:41.204 -> [HR] 110.8 BPM (Stable) | IR: 92385
+20:24:42.079 -> [HR] 102.8 BPM (Stable) | IR: 92431
+20:24:43.406 -> 
+20:24:43.406 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:24:43.406 -> [Audio] Capturing 3-second sample...
+20:24:46.294 -> [Audio] RMS Energy: 693.61
+20:25:05.654 -> [Audio] Sending to cloud (attempt 1/3)...
+20:25:05.654 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999088048934937,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:25:05.654 -> [Audio] Result: normal (Check: HF-ONLY)
+20:25:06.414 -> ├─ [Physio] Status: safe | HR: 102.8 | SpO2: 95.5% | Audio: normal
+20:25:06.414 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 31.9 | H: 65.9
+20:25:06.414 -> └─ [OVERALL]: medium
+20:25:06.414 -> [Status] Updating device status (UPSERT)...
+20:25:07.888 -> [Status] Status Updated (HTTP 200)
+20:25:11.268 -> [HR] 89.5 BPM (Stable) | IR: 92745
+20:25:12.015 -> [HR] 89.0 BPM (Stable) | IR: 92710
+20:25:12.438 -> [HR] 80.5 BPM (Stable) | IR: 92721
+20:25:13.037 -> [HR] 88.2 BPM (Stable) | IR: 92792
+20:25:13.804 -> [HR] 97.8 BPM (Stable) | IR: 92841
+20:25:14.363 -> [HR] 102.8 BPM (Stable) | IR: 92856
+20:25:14.932 -> [HR] 96.8 BPM (Stable) | IR: 92875
+20:25:15.465 -> [HR] 103.2 BPM (Stable) | IR: 92865
+20:25:16.592 -> [HR] 95.5 BPM (Stable) | IR: 92930
+20:25:17.840 -> [HR] 82.2 BPM (Stable) | IR: 93042
+20:25:18.346 -> [HR] 84.5 BPM (Stable) | IR: 93018
+20:25:18.885 -> [HR] 81.0 BPM (Stable) | IR: 92967
+20:25:23.817 -> [HR] 100.8 BPM (Stable) | IR: 93863
+20:25:24.323 -> [HR] 117.2 BPM (Stable) | IR: 93828
+20:25:24.762 -> [HR] 122.2 BPM (Stable) | IR: 93860
+20:25:25.214 -> [HR] 129.2 BPM (Stable) | IR: 93943
+20:25:26.212 -> [HR] 111.8 BPM (Stable) | IR: 93774
+20:25:43.385 -> 
+20:25:43.385 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:25:43.385 -> [Audio] Capturing 3-second sample...
+20:25:46.326 -> [Audio] RMS Energy: 1226.81
+20:25:46.601 -> [Audio] Sending to cloud (attempt 1/3)...
+20:26:02.894 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":1,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:26:02.894 -> [Audio] Result: normal (Check: HF-ONLY)
+20:26:03.629 -> ├─ [Physio] Status: critical | HR: 111.8 | SpO2: 84.6% | Audio: normal
+20:26:03.629 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 32.0 | H: 65.4
+20:26:03.629 -> └─ [OVERALL]: critical
+20:26:03.629 -> [Status] Updating device status (UPSERT)...
+20:26:05.195 -> [Status] Status Updated (HTTP 200)
+20:26:14.105 -> [HR] 117.5 BPM (Stable) | IR: 108252
+20:26:19.691 -> [HR] 94.2 BPM (Stable) | IR: 109657
+20:26:21.803 -> [HR] 90.8 BPM (Stable) | IR: 109639
+20:26:21.803 -> [HR] 86.8 BPM (Stable) | IR: 109333
+20:26:23.246 -> [HR] 62.8 BPM (Stable) | IR: 108631
+20:26:24.188 -> [HR] 71.2 BPM (Stable) | IR: 108789
+20:26:25.153 -> [HR] 55.2 BPM (Stable) | IR: 108745
+20:26:25.944 -> [HR] 63.2 BPM (Stable) | IR: 109035
+20:26:38.546 -> [HR] 80.5 BPM (Stable) | IR: 107235
+20:26:40.121 -> [HR] 73.2 BPM (Stable) | IR: 107439
+20:26:41.523 -> [HR] 70.8 BPM (Stable) | IR: 107251
+20:26:42.053 -> [HR] 81.8 BPM (Stable) | IR: 107753
+20:26:43.423 -> 
+20:26:43.423 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:26:43.423 -> [Audio] Capturing 3-second sample...
+20:26:46.316 -> [Audio] RMS Energy: 382.65
+20:26:46.590 -> [Audio] Sending to cloud (attempt 1/3)...
+20:26:50.254 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9031265377998352,"cough":0.09671328961849213,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:26:50.254 -> [Audio] Result: normal (Check: HF-ONLY)
+20:26:50.960 -> ├─ [Physio] Status: error | HR: 81.8 | SpO2: 0.0% | Audio: normal
+20:26:50.960 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 32.1 | H: 65.4
+20:26:50.960 -> └─ [OVERALL]: medium
+20:26:50.960 -> [Status] Updating device status (UPSERT)...
+20:26:52.009 -> [Status] Status Updated (HTTP 200)
+20:26:56.789 -> [HR] 95.0 BPM (Stable) | IR: 105708
+20:26:57.634 -> [HR] 101.5 BPM (Stable) | IR: 105523
+20:27:16.088 -> [HR] 110.0 BPM (Stable) | IR: 104413
+20:27:17.066 -> [HR] 95.2 BPM (Stable) | IR: 104388
+20:27:17.408 -> [HR] 98.8 BPM (Stable) | IR: 104498
+20:27:18.769 -> [HR] 91.5 BPM (Stable) | IR: 104255
+20:27:20.906 -> [HR] 100.2 BPM (Stable) | IR: 103944
+20:27:21.590 -> [HR] 109.0 BPM (Stable) | IR: 104026
+20:27:22.480 -> [HR] 80.5 BPM (Stable) | IR: 104014
+20:27:27.528 -> [HR] 84.0 BPM (Stable) | IR: 105725
+20:27:28.897 -> [HR] 64.8 BPM (Stable) | IR: 105543
+20:27:29.810 -> [HR] 62.8 BPM (Stable) | IR: 105401
+20:27:32.930 -> [HR] 62.0 BPM (Stable) | IR: 105865
+20:27:35.978 -> [HR] 65.2 BPM (Stable) | IR: 105397
+20:27:36.719 -> [HR] 73.5 BPM (Stable) | IR: 105298
+20:27:39.682 -> [HR] 66.5 BPM (Stable) | IR: 104575
+20:27:41.132 -> [HR] 61.5 BPM (Stable) | IR: 105771
+20:27:42.357 -> [HR] 55.8 BPM (Stable) | IR: 105580
+20:27:44.623 -> 
+20:27:44.623 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:27:44.623 -> [Audio] Capturing 3-second sample...
+20:27:47.508 -> [Audio] RMS Energy: 1134.58
+20:27:56.855 -> [Audio] Sending to cloud (attempt 1/3)...
+20:27:56.855 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9999861717224121,"cough":0,"normal_breathing":0,"talking":0,"wheeze":0}}
+20:27:56.972 -> [Audio] Result: normal (Check: HF-ONLY)
+20:27:57.575 -> ├─ [Physio] Status: critical | HR: 55.8 | SpO2: 88.1% | Audio: normal
+20:27:57.575 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 32.2 | H: 64.8
+20:27:57.575 -> └─ [OVERALL]: critical
+20:27:57.575 -> [Status] Updating device status (UPSERT)...
+20:27:58.696 -> [Status] Status Updated (HTTP 200)
+20:28:23.384 -> [HR] 49.0 BPM (Stable) | IR: 108768
+20:28:23.384 -> [HR] 70.2 BPM (Stable) | IR: 107831
+20:28:24.785 -> [HR] 70.5 BPM (Stable) | IR: 107597
+20:28:25.470 -> [HR] 80.8 BPM (Stable) | IR: 107232
+20:28:37.909 -> [HR] 83.0 BPM (Stable) | IR: 106798
+20:28:37.909 -> [HR] 66.0 BPM (Stable) | IR: 105012
+20:28:38.873 -> [HR] 71.5 BPM (Stable) | IR: 104891
+20:28:39.517 -> [HR] 73.2 BPM (Stable) | IR: 104930
+20:28:40.119 -> [HR] 83.8 BPM (Stable) | IR: 104973
+20:28:44.607 -> 
+20:28:44.607 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:28:44.607 -> [Audio] Capturing 3-second sample...
+20:28:47.493 -> [Audio] RMS Energy: 2095.23
+20:28:47.747 -> [Audio] Sending to cloud (attempt 1/3)...
+20:28:50.428 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":false,"gemini_error":null,"scores":{"bg_noise":0.9982004165649414,"cough":0,"normal_breathing":0.0017971855122596025,"talking":0,"wheeze":0}}
+20:28:50.428 -> [Audio] Result: normal (Check: HF-ONLY)
+20:28:51.180 -> ├─ [Physio] Status: error | HR: 83.8 | SpO2: 0.0% | Audio: normal
+20:28:51.180 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 32.2 | H: 64.5
+20:28:51.180 -> └─ [OVERALL]: medium
+20:28:51.180 -> [Status] Updating device status (UPSERT)...
+20:28:52.468 -> [Status] Status Updated (HTTP 200)
+20:28:59.557 -> [HR] 78.0 BPM (Stable) | IR: 102780
+20:29:00.096 -> [HR] 88.8 BPM (Stable) | IR: 102777
+20:29:02.612 -> [HR] 82.0 BPM (Stable) | IR: 103008
+20:29:03.249 -> [HR] 81.2 BPM (Stable) | IR: 103094
+20:29:06.228 -> [HR] 82.8 BPM (Stable) | IR: 102920
+20:29:06.885 -> [HR] 79.2 BPM (Stable) | IR: 102852
+20:29:08.122 -> [HR] 74.0 BPM (Stable) | IR: 102983
+20:29:08.506 -> [HR] 90.2 BPM (Stable) | IR: 102892
+20:29:09.815 -> [HR] 87.0 BPM (Stable) | IR: 102518
+20:29:10.295 -> [HR] 93.2 BPM (Stable) | IR: 103591
+20:29:12.673 -> [HR] 105.0 BPM (Stable) | IR: 102640
+20:29:15.491 -> [HR] 107.2 BPM (Stable) | IR: 105094
+20:29:18.484 -> [HR] 108.5 BPM (Stable) | IR: 103257
+20:29:19.054 -> [HR] 106.2 BPM (Stable) | IR: 103192
+20:29:19.538 -> [HR] 113.5 BPM (Stable) | IR: 103190
+20:29:20.824 -> [HR] 82.0 BPM (Stable) | IR: 103173
+20:29:21.440 -> [HR] 93.8 BPM (Stable) | IR: 103182
+20:29:22.172 -> [HR] 86.5 BPM (Stable) | IR: 103358
+20:29:22.911 -> [HR] 76.5 BPM (Stable) | IR: 103064
+20:29:26.790 -> [HR] 79.5 BPM (Stable) | IR: 102844
+20:29:27.269 -> [HR] 86.5 BPM (Stable) | IR: 102864
+20:29:28.411 -> [HR] 79.8 BPM (Stable) | IR: 102680
+20:29:28.786 -> [HR] 102.0 BPM (Stable) | IR: 102761
+20:29:29.186 -> [HR] 121.8 BPM (Stable) | IR: 102674
+20:29:30.420 -> [HR] 102.2 BPM (Stable) | IR: 102630
+20:29:31.604 -> [HR] 101.8 BPM (Stable) | IR: 102456
+20:29:32.243 -> [HR] 104.2 BPM (Stable) | IR: 102492
+20:29:32.622 -> [HR] 111.8 BPM (Stable) | IR: 102466
+20:29:44.856 -> 
+20:29:44.856 -> [Monitor] Triggering analysis (interval: 60000 ms)...
+20:29:44.856 -> [Audio] Capturing 3-second sample...
+20:29:47.753 -> [Audio] RMS Energy: 688.80
+20:29:48.042 -> [Audio] Sending to cloud (attempt 1/3)...
+20:29:53.764 -> [Audio] Full response: {"success":true,"inference":{"cough":0,"wheeze":0},"gemini_verified":true,"gemini_error":null,"scores":{"bg_noise":0.605405867099762,"cough":0.32692477107048035,"normal_breathing":0,"talking":0.0676693245768547,"wheeze":0}}
+20:29:53.764 -> [Audio] Result: normal (Check: GEMINI VERIFIED)
+20:29:53.797 -> ├─ [Physio] Status: error | HR: 111.8 | SpO2: -1.0% | Audio: normal
+20:29:53.797 -> ├─ [Enviro] Status: medium | PM1/2.5/10: 15/21/21 | T: 32.2 | H: 64.7
+20:29:53.797 -> └─ [OVERALL]: medium
+20:29:53.797 -> [Status] Updating device status (UPSERT)...
+20:29:54.718 -> [Status] Status Updated (HTTP 200)

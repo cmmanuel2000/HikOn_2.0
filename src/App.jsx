@@ -116,9 +116,13 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
       if (record.humidity) groupedByDay[dayKey].humidityValues.push(record.humidity);
       if (record.pm25) groupedByDay[dayKey].pm25Values.push(record.pm25);
       
-      // Count symptoms from 0/1 integer columns
-      if (record.cough === 1) groupedByDay[dayKey].coughCount++;
-      if (record.wheeze === 1) groupedByDay[dayKey].wheezeCount++;
+      // Count symptoms from binary columns OR prediction labels
+      const isCough = record.cough === 1 || (record.prediction_label && record.prediction_label.toLowerCase().includes('cough'));
+      const isWheeze = record.wheeze === 1 || (record.prediction_label && record.prediction_label.toLowerCase().includes('wheeze'));
+      
+      if (isCough) groupedByDay[dayKey].coughCount++;
+      if (isWheeze) groupedByDay[dayKey].wheezeCount++;
+
     });
     
     // Calculate averages and create final data structure
@@ -283,14 +287,15 @@ const App = () => {
       const patient = patients.find(p => p.id === selectedPatientId);
       if (!patient) return;
 
-      const oneHourAgo = new Date();
-      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
       const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
       const [latestRes, eventsRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?patient_id=eq.${patient.patientId}&heart_rate=not.is.null&order=created_at.desc&limit=1`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${oneHourAgo.toISOString()}&patient_id=eq.${patient.patientId}&select=cough,wheeze`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?patient_id=eq.${patient.patientId}&order=created_at.desc&limit=1`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}&patient_id=eq.${patient.patientId}&select=cough,wheeze,prediction_label`, { headers })
       ]);
+
 
       if (!latestRes.ok) return;
       const data = await latestRes.json();
@@ -300,9 +305,16 @@ const App = () => {
       let wheezeCount = 0, coughCount = 0;
       if (eventsRes.ok) {
         const events = await eventsRes.json();
-        wheezeCount = events.reduce((s, e) => s + (e.wheeze === 1 ? 1 : 0), 0);
-        coughCount  = events.reduce((s, e) => s + (e.cough  === 1 ? 1 : 0), 0);
+        wheezeCount = events.reduce((s, e) => {
+          const isWheeze = e.wheeze === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('wheeze'));
+          return s + (isWheeze ? 1 : 0);
+        }, 0);
+        coughCount = events.reduce((s, e) => {
+          const isCough = e.cough === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('cough'));
+          return s + (isCough ? 1 : 0);
+        }, 0);
       }
+
 
       // Use raw values — NO calibration applied
       const rawSpo2      = latest.spo2        || 0;
@@ -369,14 +381,14 @@ const App = () => {
          patientFilterWithAmp = `&patient_id=eq.${patient.patientId}`;
       }
 
-      const oneHourAgo = new Date();
-      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
       const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
       // Fire the two display fetches in parallel
       const [latestRes, eventsRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?${patientFilter}heart_rate=not.is.null&order=created_at.desc&limit=1`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${oneHourAgo.toISOString()}${patientFilterWithAmp}&select=cough,wheeze`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?${patientFilter}order=created_at.desc&limit=1`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}${patientFilterWithAmp}&select=cough,wheeze,prediction_label`, { headers })
       ]);
 
       if (!latestRes.ok) {
@@ -395,9 +407,16 @@ const App = () => {
       let coughCount = 0;
       if (eventsRes.ok) {
         const events = await eventsRes.json();
-        wheezeCount = events.reduce((sum, e) => sum + (e.wheeze === 1 ? 1 : 0), 0);
-        coughCount = events.reduce((sum, e) => sum + (e.cough === 1 ? 1 : 0), 0);
+        wheezeCount = events.reduce((sum, e) => {
+          const isWheeze = e.wheeze === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('wheeze'));
+          return sum + (isWheeze ? 1 : 0);
+        }, 0);
+        coughCount = events.reduce((sum, e) => {
+          const isCough = e.cough === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('cough'));
+          return sum + (isCough ? 1 : 0);
+        }, 0);
       }
+
 
       // Calculate breathing rate from accelerometer data (at rest only)
       const rawHeartRate = latest.heart_rate || 0;
