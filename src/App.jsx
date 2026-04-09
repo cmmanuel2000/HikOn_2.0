@@ -568,60 +568,56 @@ const App = () => {
   if (!userRole) {
     return (
       <div 
-        className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${themeClasses.text} font-sans selection:bg-lime-200 antialiased relative bg-cover bg-center bg-no-repeat`}
-        style={{ backgroundImage: "url('/asthma_children_backdrop.png')" }}
+        className="min-h-screen flex items-center justify-center font-sans selection:bg-lime-200 antialiased relative"
+        style={{
+          backgroundImage: "linear-gradient(to bottom, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.85)), url('/bg-hikon.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
       >
-        {/* Soft overlay to ensure text and cards are readable while letting the backdrop show through */}
-        <div className={`absolute inset-0 z-0 transition-colors duration-500 ${theme === 'light' ? 'bg-white/85' : 'bg-[#0f172a]/90'} backdrop-blur-[2px]`}></div>
-        <div className={`fixed z-0 -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] pointer-events-none transition-opacity duration-700 ${theme === 'light' ? 'bg-blue-600/10 opacity-100' : 'bg-blue-400/20 opacity-60'}`} />
-        
-        <div className="z-10 flex flex-col items-center max-w-lg w-full px-6">
-          <div className="mb-12">
-            <HikOnLogo theme={theme} />
+        <div className="z-10 flex flex-col items-center max-w-2xl w-full px-8 py-12 m-4 rounded-[2.5rem] bg-slate-900/40 backdrop-blur-md border border-slate-700/50 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]">
+          <div className="mb-8 p-6 bg-slate-900/50 rounded-full backdrop-blur-lg border border-slate-700/50 shadow-inner">
+            <HikOnLogo theme="dark" />
           </div>
           
-          <h1 className={`text-3xl font-black mb-2 text-center tracking-tight ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>
-            Welcome to HikOn
+          <h1 className="text-3xl md:text-4xl font-black mb-4 text-center tracking-tight text-white drop-shadow-md">
+            Welcome to the HikOn System
           </h1>
-          <p className={`text-sm font-bold uppercase tracking-widest text-center mb-10 ${themeClasses.subtext}`}>
+          
+          <p className="text-sm md:text-base text-center mb-10 text-slate-200 max-w-xl leading-relaxed font-medium px-4 drop-shadow-sm">
+            HikOn is a continuous respiratory monitoring dashboard specifically designed for children suffering from asthma. By tracking vital signs and environmental triggers, it helps parents and clinicians proactively detect and manage asthma symptoms.
+          </p>
+
+          <p className="text-xs font-bold uppercase tracking-widest text-center mb-6 text-slate-400">
             Select Your Access Level
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full px-4">
             <button 
               onClick={() => setUserRole('user')}
-              className={`p-8 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 group ${theme === 'light' ? 'bg-white border-blue-100 hover:border-blue-400 shadow-xl shadow-blue-900/5' : 'bg-[#1e293b] border-slate-700 hover:border-blue-500 shadow-xl shadow-blue-900/20'}`}
+              className="p-8 rounded-[2rem] border border-slate-700/60 flex flex-col items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98] group bg-slate-800/60 hover:bg-slate-700/60 hover:border-blue-400/50 shadow-lg"
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${theme === 'light' ? 'bg-blue-50 text-blue-600' : 'bg-blue-900/30 text-blue-400'}`}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center bg-blue-900/40 text-blue-400 group-hover:bg-blue-500/20 group-hover:text-blue-300 transition-colors">
                 <User size={32} />
               </div>
               <div className="text-center">
-                <h3 className={`text-lg font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>User Mode</h3>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${themeClasses.subtext}`}>View Core Vitals</p>
+                <h3 className="text-lg font-black text-white group-hover:text-blue-100 transition-colors">User Mode</h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-slate-400 group-hover:text-slate-300 transition-colors">View Core Vitals</p>
               </div>
             </button>
 
             <button 
               onClick={() => setUserRole('admin')}
-              className={`p-8 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 group ${theme === 'light' ? 'bg-white border-emerald-100 hover:border-emerald-400 shadow-xl shadow-emerald-900/5' : 'bg-[#1e293b] border-slate-700 hover:border-emerald-500 shadow-xl shadow-emerald-900/20'}`}
+              className="p-8 rounded-[2rem] border border-slate-700/60 flex flex-col items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98] group bg-slate-800/60 hover:bg-slate-700/60 hover:border-emerald-400/50 shadow-lg"
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${theme === 'light' ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-900/30 text-emerald-400'}`}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-300 transition-colors">
                 <LayoutDashboard size={32} />
               </div>
               <div className="text-center">
-                <h3 className={`text-lg font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>Admin Mode</h3>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${themeClasses.subtext}`}>Developer Portal</p>
+                <h3 className="text-lg font-black text-white group-hover:text-emerald-100 transition-colors">Admin Mode</h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-slate-400 group-hover:text-slate-300 transition-colors">Developer Portal</p>
               </div>
-            </button>
-          </div>
-          
-          <div className="mt-12">
-            <button
-              onClick={toggleTheme}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-colors ${theme === 'light' ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
-            >
-              {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
-              {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
             </button>
           </div>
         </div>
