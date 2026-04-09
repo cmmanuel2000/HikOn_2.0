@@ -3,11 +3,6 @@ import { useState, useCallback, useEffect } from 'react';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.warn("⚠️ Patient Management: Supabase credentials missing. Using local fallback data.");
-}
-
-
 // Fallback patients shown while Supabase loads (or if fetch fails)
 const FALLBACK_PATIENTS = [
   { id: 1, name: 'Patient 1', age: 5, gender: 'Male', patientId: 'PATIENT-001', addedDate: new Date().toISOString() },
