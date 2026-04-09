@@ -202,6 +202,10 @@ const App = () => {
 
   // 24-hour SpO2 trend data for continuity chart (real Supabase data)
   const [vitalsTrend, setVitalsTrend] = useState([]);
+
+  // Raw (uncalibrated) sensor data for Risk Assessment tab
+  const defaultRawSensors = { spo2: 'N/A', heartRate: 'N/A', breathingRate: 'N/A', temperature: 'N/A', humidity: 'N/A', pm25: 'N/A', aqi: 'N/A', wheezeCount: 0, coughCount: 0, physioRisk: 'safe', riskScore: 0, confidence: 0, reasoning: 'Waiting for data...', individualRisks: { symptom: 0, spo2: 0, breathing: 0 }, physioTriggers: [], envRisk: 'safe', envTriggers: [], isPhysicalActivity: false, spo2WasCritical: false };
+  const [rawSensors, setRawSensors] = useState(defaultRawSensors);
   
   // --- PATIENT MANAGEMENT (USING HOOK) ---
   const patientManagement = usePatientManagement();
@@ -271,6 +275,86 @@ const App = () => {
     setTreatmentStatus(null);
     setIsAlertVisible(false);
   };
+
+  // Fetch RAW (uncalibrated) sensor data for Risk Assessment tab
+  const fetchRawSensorData = useCallback(async () => {
+    if (isTestingMode) return;
+    try {
+      const patient = patients.find(p => p.id === selectedPatientId);
+      if (!patient) return;
+
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+      const [latestRes, eventsRes] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?patient_id=eq.${patient.patientId}&heart_rate=not.is.null&order=created_at.desc&limit=1`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${oneHourAgo.toISOString()}&patient_id=eq.${patient.patientId}&select=cough,wheeze`, { headers })
+      ]);
+
+      if (!latestRes.ok) return;
+      const data = await latestRes.json();
+      if (data.length === 0) return;
+      const latest = data[0];
+
+      let wheezeCount = 0, coughCount = 0;
+      if (eventsRes.ok) {
+        const events = await eventsRes.json();
+        wheezeCount = events.reduce((s, e) => s + (e.wheeze === 1 ? 1 : 0), 0);
+        coughCount  = events.reduce((s, e) => s + (e.cough  === 1 ? 1 : 0), 0);
+      }
+
+      // Use raw values — NO calibration applied
+      const rawSpo2      = latest.spo2        || 0;
+      const rawHeartRate = latest.heart_rate  || 0;
+      let   rawBR        = latest.br_rate;
+      if (rawBR === null || rawBR === undefined) {
+        rawBR = rawHeartRate > 0 ? Math.max(12, Math.min(45, Math.round(rawHeartRate / 4.5))) : 16;
+      }
+
+      const fusionResult = hybridFusion(wheezeCount, coughCount, rawSpo2 > 0 ? rawSpo2 : 98, rawBR);
+
+      const temperature = latest.temperature || null;
+      const humidity    = latest.humidity    || null;
+      const pm25        = latest.pm25        || null;
+      const envResult   = temperature && humidity && pm25
+        ? environmentalFusion(temperature, humidity, pm25)
+        : { environmentalRisk: 'safe', triggers: [] };
+
+      const calcAQI = (v) => {
+        if (!v) return 'N/A';
+        if (v <= 12)    return 'Good';
+        if (v <= 35.4)  return 'Moderate';
+        if (v <= 55.4)  return 'Unhealthy (Sensitive)';
+        if (v <= 150.4) return 'Unhealthy';
+        if (v <= 250.4) return 'Very Unhealthy';
+        return 'Hazardous';
+      };
+
+      setRawSensors({
+        spo2:        rawSpo2      > 0 ? rawSpo2.toFixed(1)      : 'N/A',
+        heartRate:   rawHeartRate > 0 ? Math.round(rawHeartRate) : 'N/A',
+        breathingRate: rawBR,
+        temperature: temperature ? temperature.toFixed(1)  : 'N/A',
+        humidity:    humidity    ? Math.round(humidity)    : 'N/A',
+        pm25:        pm25        ? pm25.toFixed(1)          : 'N/A',
+        aqi:         calcAQI(pm25),
+        wheezeCount, coughCount,
+        physioRisk:      fusionResult.finalRisk.toLowerCase(),
+        riskScore:       fusionResult.riskScore,
+        confidence:      fusionResult.confidence,
+        reasoning:       fusionResult.reasoning,
+        individualRisks: fusionResult.individualRisks,
+        physioTriggers:  fusionResult.triggers,
+        spo2WasCritical: fusionResult.spo2WasCritical,
+        isPhysicalActivity: fusionResult.isPhysicalActivity,
+        envRisk:     envResult.environmentalRisk,
+        envTriggers: envResult.triggers
+      });
+    } catch (err) {
+      console.error('❌ Error fetching raw sensor data:', err);
+    }
+  }, [selectedPatientId, patients, isTestingMode]);
 
   // Fetch latest sensor data from Supabase
   const fetchLatestSensorData = useCallback(async () => {
@@ -491,16 +575,15 @@ const App = () => {
 
   // Fetch sensor data every 10 seconds (ESP32 uploads every ~10-15 seconds)
   useEffect(() => {
-    // Fetch immediately on mount or patient change
     fetchLatestSensorData();
     fetch24HourVitals();
+    fetchRawSensorData();
     
-    // Then update every 5 seconds
     const timer = setInterval(() => {
       fetchLatestSensorData();
+      fetchRawSensorData();
     }, 5000);
     
-    // Fetch 24h vitals every 5 minutes
     const vitalsTimer = setInterval(() => {
       fetch24HourVitals();
     }, 300000);
@@ -509,7 +592,7 @@ const App = () => {
       clearInterval(timer);
       clearInterval(vitalsTimer);
     };
-  }, [fetchLatestSensorData, fetch24HourVitals]);
+  }, [fetchLatestSensorData, fetch24HourVitals, fetchRawSensorData]);
 
   // Load historical data only when the history tab is open and a patient is selected
   useEffect(() => {
@@ -650,13 +733,22 @@ const App = () => {
             onClick={() => { setActiveTab('history');  }} 
           />
           {userRole === 'admin' && (
-            <NavItem 
-              icon={<User size={22}/>} 
-              label="Patients" 
-              active={activeTab === 'patients'} 
-              theme={theme}
-              onClick={() => { setActiveTab('patients');  }} 
-            />
+            <>
+              <NavItem 
+                icon={<User size={22}/>} 
+                label="Patients" 
+                active={activeTab === 'patients'} 
+                theme={theme}
+                onClick={() => { setActiveTab('patients'); }} 
+              />
+              <NavItem 
+                icon={<ShieldCheck size={22}/>} 
+                label="Risk Assessment" 
+                active={activeTab === 'risk'} 
+                theme={theme}
+                onClick={() => setActiveTab('risk')} 
+              />
+            </>
           )}
           <NavItem 
             icon={<Bell size={22}/>} 
@@ -1021,6 +1113,114 @@ const App = () => {
                   color="bg-blue-500"
                   theme={theme}
                />
+            </div>
+          </div>
+        ) : activeTab === 'risk' ? (
+          <div className="p-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Banner */}
+            <div className={`rounded-[2rem] p-6 border flex items-center gap-4 ${theme === 'light' ? 'bg-amber-50 border-amber-200' : 'bg-amber-900/10 border-amber-900/30'}`}>
+              <ShieldCheck size={28} className="text-amber-500 flex-shrink-0" />
+              <div>
+                <p className={`text-sm font-black ${theme === 'light' ? 'text-amber-900' : 'text-amber-400'}`}>Raw Risk Assessment — No Calibration Applied</p>
+                <p className={`text-xs font-bold ${theme === 'light' ? 'text-amber-700' : 'text-amber-500'}`}>Values are read directly from Supabase without any sensor offset corrections. Patient-filtered.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* RAW Physiological Panel */}
+              <div className={`border rounded-[2.5rem] p-10 shadow-sm relative overflow-hidden group ${themeClasses.card}`}>
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-rose-500/5 to-orange-500/5 blur-3xl opacity-70 pointer-events-none" />
+                <div className="flex justify-between items-start mb-10 relative z-10">
+                  <div>
+                    <h3 className={`text-xl font-black tracking-tight ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>Raw Physical Status</h3>
+                    <p className={`text-xs font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Uncalibrated physiological risk</p>
+                  </div>
+                  <RiskBadge level={rawSensors.physioRisk} theme={theme} />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-6 relative z-10">
+                  <Reading label="SpO2 (Raw)" value={rawSensors.spo2} unit="%" icon={<Activity className="text-blue-500"/>} theme={theme} />
+                  <Reading label="Heart Rate (Raw)" value={rawSensors.heartRate} unit="bpm" icon={<Heart className="text-rose-500"/>} theme={theme} />
+                  <Reading label="Breathing Rate" value={rawSensors.breathingRate} unit="br/m" icon={<Wind className="text-cyan-500"/>} theme={theme} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${themeClasses.subtext}`}>Risk Score</p>
+                    <p className={`text-2xl font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-blue-400'}`}>{rawSensors.riskScore.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${themeClasses.subtext}`}>Confidence</p>
+                    <p className={`text-2xl font-black ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-400'}`}>{(rawSensors.confidence * 100).toFixed(0)}%</p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <p className={`text-[9px] font-black uppercase tracking-widest mb-2 ${themeClasses.subtext}`}>Assessment</p>
+                  <p className={`text-xs font-semibold leading-relaxed ${theme === 'light' ? 'text-slate-700' : 'text-slate-300'}`}>{rawSensors.reasoning}</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {[['Symptom', rawSensors.individualRisks?.symptom], ['SpO2', rawSensors.individualRisks?.spo2], ['Breathing', rawSensors.individualRisks?.breathing]].map(([label, val]) => (
+                    <div key={label} className={`p-3 rounded-xl ${theme === 'light' ? 'bg-white' : 'bg-slate-800'}`}>
+                      <p className={`text-[8px] font-black uppercase tracking-widest mb-1 ${themeClasses.subtext}`}>{label}</p>
+                      <p className={`text-lg font-black ${val === 0 ? 'text-emerald-500' : val === 1 ? 'text-amber-500' : 'text-rose-500'}`}>
+                        {val === 0 ? 'Safe' : val === 1 ? 'Medium' : 'High'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Wheeze:</span>
+                    <span className={`px-2 py-1 rounded-lg text-xs font-black ${rawSensors.wheezeCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>{rawSensors.wheezeCount > 0 ? rawSensors.wheezeCount : 'None'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Coughs:</span>
+                    <span className={`px-2 py-1 rounded-lg text-xs font-black ${rawSensors.coughCount > 5 ? 'bg-rose-100 text-rose-700' : rawSensors.coughCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{rawSensors.coughCount}</span>
+                  </div>
+                  {rawSensors.spo2WasCritical && (
+                    <div className="px-3 py-1 rounded-lg text-[9px] font-black uppercase bg-rose-100 text-rose-700 animate-pulse">
+                      <AlertTriangle size={10} className="inline mr-1" /> Critical Alert
+                    </div>
+                  )}
+                </div>
+
+                <div className={`pt-6 mt-6 border-t ${themeClasses.border}`}>
+                  <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${themeClasses.subtext}`}>Potential Warnings</p>
+                  <div className="flex flex-wrap gap-2">
+                    {rawSensors.physioTriggers.length > 0 ? rawSensors.physioTriggers.map((t, i) => (
+                      <span key={i} className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-[10px] font-black border border-rose-100">{t}</span>
+                    )) : <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5"><CheckCircle2 size={14}/> All vitals optimal</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* RAW Environmental Panel */}
+              <div className={`border rounded-[2.5rem] p-10 shadow-sm relative overflow-hidden group ${themeClasses.card}`}>
+                <div className="flex justify-between items-start mb-10 relative z-10">
+                  <div>
+                    <h3 className={`text-xl font-black tracking-tight ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>Surroundings</h3>
+                    <p className={`text-xs font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Environmental risk monitoring</p>
+                  </div>
+                  <RiskBadge level={rawSensors.envRisk} theme={theme} />
+                </div>
+                <div className="grid grid-cols-2 gap-8 mb-10 relative z-10">
+                  <Reading label="Temp Index" value={rawSensors.temperature} unit="°C" icon={<Thermometer className="text-orange-500"/>} theme={theme} />
+                  <Reading label="Humidity" value={rawSensors.humidity} unit="%" icon={<Droplets className="text-cyan-500"/>} theme={theme} />
+                  <Reading label="Particulate PM2.5" value={rawSensors.pm25} unit="µg/m³" icon={<Wind className="text-lime-600"/>} theme={theme} />
+                  <Reading label="Air Quality Index" value={rawSensors.aqi} unit="" icon={<ShieldCheck className="text-emerald-500"/>} smallValue theme={theme} />
+                </div>
+                <div className={`pt-8 border-t relative z-10 ${themeClasses.border}`}>
+                  <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${themeClasses.subtext}`}>Active Trigger Warnings</p>
+                  <div className="flex flex-wrap gap-2">
+                    {rawSensors.envTriggers.length > 0 ? rawSensors.envTriggers.map((t, i) => (
+                      <span key={i} className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black border border-amber-100">{t}</span>
+                    )) : <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5"><CheckCircle2 size={14}/> Atmosphere is clear</span>}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ) : activeTab === 'settings' ? (
