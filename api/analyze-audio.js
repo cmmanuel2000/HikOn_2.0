@@ -51,7 +51,7 @@ async function checkWithGemini(samples, apiKey) {
                 { inline_data: { mime_type: "audio/wav", data: base64Audio } }
               ]
             }],
-            generationConfig: { response_mime_type: "application/json" }
+            generationConfig: { responseMimeType: "application/json" }
           })
         });
 
