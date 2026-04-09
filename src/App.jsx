@@ -111,6 +111,7 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
       // Collect values for averaging
       if (record.spo2) groupedByDay[dayKey].spo2Values.push(record.spo2);
       if (record.heart_rate) groupedByDay[dayKey].heartRateValues.push(record.heart_rate);
+      if (record.br_rate !== null && record.br_rate !== undefined) groupedByDay[dayKey].breathingRateValues.push(record.br_rate);
       if (record.temperature) groupedByDay[dayKey].tempValues.push(record.temperature);
       if (record.humidity) groupedByDay[dayKey].humidityValues.push(record.humidity);
       if (record.pm25) groupedByDay[dayKey].pm25Values.push(record.pm25);
@@ -135,7 +136,12 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
         : (day.heartRateValues.length > 0 
           ? day.heartRateValues.reduce((a, b) => a + b, 0) / day.heartRateValues.length 
           : 72);
-      const estimatedBreathingRate = avgHeartRate > 0 ? Math.round(avgHeartRate / 4.5) : 16;
+          
+      // Extract breathing rate from Supabase br_rate, fallback to HR derived if missing
+      const validBR = day.breathingRateValues.filter(v => v > 8 && v < 60);
+      const avgBreathingRate = validBR.length > 0 
+        ? Math.round(validBR.sort((a, b) => a - b)[Math.floor(validBR.length / 2)])
+        : (avgHeartRate > 0 ? Math.round(avgHeartRate / 4.5) : 16);
       const avgTemp = day.tempValues.length > 0 
         ? day.tempValues.reduce((a, b) => a + b, 0) / day.tempValues.length 
         : 24;
@@ -151,7 +157,7 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
         day.wheezeCount,
         day.coughCount,
         avgSpo2,
-        estimatedBreathingRate
+        avgBreathingRate
       );
       
       const hasAsthmaEvent = fusionResult.finalRisk !== 'SAFE' ? 1 : 0;
@@ -161,7 +167,7 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
         fullDate: day.fullDate,
         spo2: avgSpo2,
         heartRate: Math.round(avgHeartRate),
-        breathingRate: estimatedBreathingRate,
+        breathingRate: avgBreathingRate,
         coughCount: day.coughCount,
         wheezeCount: day.wheezeCount,
         riskScore: fusionResult.riskScore,
@@ -319,33 +325,15 @@ const App = () => {
       
       console.log(`[Calibration] SpO2: ${rawSpo2.toFixed(1)} -> ${spo2} (+5.13 offset) | HR: ${rawHeartRate.toFixed(0)} -> ${heartRate} (median filter)`);
 
-      const brResult = await calculateBreathingRate();
-      let breathingRate;
-      if (brResult.breathingRate !== null) {
-        // Real measurement from accelerometer (now fully supports both Rest and Active!)
-        breathingRate = brResult.breathingRate;
-        console.log(`[BR] Measured from accel: ${breathingRate} BPM (${brResult.isAtRest ? 'at rest' : 'active'})`);
-        
-        // SYNC TIMING: Backfill the ESP32's 1-minute upload row with the calculated breathing rate
-        if (latest.id && (latest.br_rate === null || latest.br_rate === undefined)) {
-           fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?id=eq.${latest.id}`, {
-             method: 'PATCH',
-             headers: {
-               'apikey': SUPABASE_KEY,
-               'Authorization': `Bearer ${SUPABASE_KEY}`,
-               'Content-Type': 'application/json',
-               'Prefer': 'return=minimal'
-             },
-             body: JSON.stringify({ br_rate: breathingRate })
-           })
-           .then(res => { if(res.ok) console.log(`[Sync] Saved Breathing Rate ${breathingRate} to Supabase row ${latest.id}`); })
-           .catch(err => console.error('[Sync] Error saving BR:', err));
-        }
-      } else {
-        // Fallback: estimate from heart rate only if accel is completely missing
+      // Use device-provided breathing rate from Supabase
+      let breathingRate = latest.br_rate;
+      if (breathingRate === null || breathingRate === undefined) {
+        // Fallback: estimate from heart rate only if device BR is completely missing
         const estimatedBreathingRate = heartRate > 0 ? Math.round(heartRate / 4.5) : 16;
         breathingRate = Math.max(12, Math.min(45, estimatedBreathingRate));
-        console.log(`[BR] Estimated (${brResult.confidence}): ${breathingRate} BPM`);
+        console.log(`[BR] Estimated from HR: ${breathingRate} BPM`);
+      } else {
+        console.log(`[BR] Device measured: ${breathingRate} BPM`);
       }
       
       // Run physiological fusion logic with real data
