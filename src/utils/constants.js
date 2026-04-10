@@ -15,13 +15,18 @@ export const RISK_THRESHOLDS = {
 };
 
 export const SPO2_THRESHOLDS = {
-  high_max: 92,
-  safe_min: 95,
+  high_max: 95,
+  safe_min: 98,
 };
 
 export const BREATHING_THRESHOLDS_3_TO_7_YRS = {
   safe_max: 34,
   medium_max: 40,
+};
+
+export const BREATHING_THRESHOLDS_6_TO_12_YRS = {
+  safe_max: 22,
+  medium_max: 30,
 };
 
 // Environmental Sensor Weights

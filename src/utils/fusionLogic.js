@@ -3,8 +3,9 @@ import {
   TOTAL_WEIGHT, 
   RISK_THRESHOLDS,
   SPO2_THRESHOLDS,
-  BREATHING_THRESHOLDS_3_TO_7_YRS
-} from './constants';
+  BREATHING_THRESHOLDS_3_TO_7_YRS,
+  BREATHING_THRESHOLDS_6_TO_12_YRS
+} from './constants.js';
 
 // Classification functions for physiological sensors
 export const classifySpo2 = (spo2Value) => {
@@ -13,9 +14,11 @@ export const classifySpo2 = (spo2Value) => {
   return 0; // Safe
 };
 
-export const classifyBreathingRate = (bpm) => {
-  if (bpm > BREATHING_THRESHOLDS_3_TO_7_YRS.medium_max) return 2; // High risk
-  if (bpm > BREATHING_THRESHOLDS_3_TO_7_YRS.safe_max) return 1;   // Medium risk
+export const classifyBreathingRate = (bpm, age = 5) => {
+  const thresholds = age >= 6 ? BREATHING_THRESHOLDS_6_TO_12_YRS : BREATHING_THRESHOLDS_3_TO_7_YRS;
+  
+  if (bpm > thresholds.medium_max) return 2; // High risk
+  if (bpm > thresholds.safe_max) return 1;   // Medium risk
   return 0; // Safe
 };
 
@@ -26,11 +29,11 @@ export const classifySymptomSeverity = (wheezeCount, coughs) => {
 };
 
 // Hybrid Fusion Logic (matching Python)
-export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate) => {
+export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5) => {
   // 1. Classify raw sensor values
   const symptomRisk = classifySymptomSeverity(wheezeCount, coughCount);
   const spo2Risk = classifySpo2(spo2Value);
-  const breathingRisk = classifyBreathingRate(breathingRate);
+  const breathingRisk = classifyBreathingRate(breathingRate, age);
 
   const individualRisks = { symptom: symptomRisk, spo2: spo2Risk, breathing: breathingRisk };
   const symptomLog = { wheeze: wheezeCount, coughs: coughCount };
@@ -50,13 +53,13 @@ export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate) 
     };
   }
 
-  // 3. Safety Guardrail: Critical SpO2 (<= 92%)
+  // 3. Safety Guardrail: Critical SpO2 (<= 95%)
   if (spo2Risk === 2) {
     return {
       finalRisk: 'HIGH',
       riskScore: 2.0,
       confidence: 0.95,
-      reasoning: 'CRITICAL OVERRIDE: SpO2 at or below 92% triggered safety protocol.',
+      reasoning: `CRITICAL OVERRIDE: SpO2 at or below ${SPO2_THRESHOLDS.high_max}% triggered safety protocol.`,
       individualRisks,
       symptomLog,
       spo2WasCritical: true,

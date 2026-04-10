@@ -63,7 +63,7 @@ import { HikOnLogo, RiskBadge, Reading, ActionCard, StatCard } from './component
 
 
 // Fetch historical data from Supabase
-const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
+const fetchHistoricalData = async (days, patientId = null, role = 'admin', age = 5) => {
   try {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -161,7 +161,8 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin') => {
         day.wheezeCount,
         day.coughCount,
         avgSpo2,
-        avgBreathingRate
+        avgBreathingRate,
+        age
       );
       
       const hasAsthmaEvent = fusionResult.finalRisk !== 'SAFE' ? 1 : 0;
@@ -324,7 +325,7 @@ const App = () => {
         rawBR = rawHeartRate > 0 ? Math.max(12, Math.min(45, Math.round(rawHeartRate / 4.5))) : 16;
       }
 
-      const fusionResult = hybridFusion(wheezeCount, coughCount, rawSpo2 > 0 ? rawSpo2 : 98, rawBR);
+      const fusionResult = hybridFusion(wheezeCount, coughCount, rawSpo2 > 0 ? rawSpo2 : 98, rawBR, patient.age);
 
       const temperature = latest.temperature || null;
       const humidity    = latest.humidity    || null;
@@ -444,7 +445,8 @@ const App = () => {
         wheezeCount,
         coughCount,
         spo2 > 0 ? spo2 : 98,
-        breathingRate
+        breathingRate,
+        patient?.age || 5
       );
 
       // Run environmental fusion logic
@@ -622,7 +624,7 @@ const App = () => {
     const loadHistoricalData = async () => {
       setIsLoadingHistory(true);
       const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-      const data = await fetchHistoricalData(days, selectedPatient?.patientId, userRole);
+    const data = await fetchHistoricalData(days, selectedPatient?.patientId, userRole, selectedPatient?.age || 5);
       setTrendData(data);
       setIsLoadingHistory(false);
     };
