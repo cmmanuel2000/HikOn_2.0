@@ -285,7 +285,7 @@ const App = () => {
   const fetchRawSensorData = useCallback(async () => {
     if (isTestingMode) return;
     try {
-      const patient = patients.find(p => p.id === selectedPatientId);
+      const patient = patients.find(p => p.id === selectedPatientId) || patients[0];
       if (!patient) return;
 
       const todayStart = new Date();
@@ -373,7 +373,7 @@ const App = () => {
   const fetchLatestSensorData = useCallback(async () => {
     if (isTestingMode) return;
     try {
-      const patient = patients.find(p => p.id === selectedPatientId);
+      const patient = patients.find(p => p.id === selectedPatientId) || patients[0];
       if (!patient) return;
 
       const patientFilter = `patient_id=eq.${patient.patientId}&`;
@@ -534,7 +534,7 @@ const App = () => {
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
       
-      const patient = patients.find(p => p.id === selectedPatientId);
+      const patient = patients.find(p => p.id === selectedPatientId) || patients[0];
       if (!patient) return;
       const patientFilter = `&patient_id=eq.${patient.patientId}`;
 
