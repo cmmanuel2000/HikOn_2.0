@@ -281,6 +281,30 @@ const App = () => {
     setIsAlertVisible(false);
   };
 
+  // Stamp all NULL rows to the selected patient immediately
+  const recordForPatient = useCallback(async () => {
+    const patient = patients.find(p => p.id === selectedPatientId);
+    if (!patient) return;
+    setIsRecording(true);
+    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?patient_id=is.null`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ patient_id: patient.patientId })
+      });
+      if (res.ok) {
+        // Data is successfully tagged in background. 
+        // No need to refresh immediately as the current fetch already includes untagged data.
+      } else {
+        console.error('Record failed:', await res.text());
+      }
+    } catch (e) {
+      console.error('Record error:', e);
+    }
+    setIsRecording(false);
+  }, [patients, selectedPatientId, activeTab]); // Note: dependencies will be updated in next step
+
   // Fetch RAW (uncalibrated) sensor data for Risk Assessment tab
   const fetchRawSensorData = useCallback(async () => {
     if (isTestingMode) return;
@@ -293,8 +317,8 @@ const App = () => {
       const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
       const [latestRes, eventsRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?patient_id=eq.${patient.patientId}&order=created_at.desc&limit=1`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}&patient_id=eq.${patient.patientId}&select=cough,wheeze,prediction_label`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?or=(patient_id.eq.${patient.patientId},patient_id.is.null)&order=created_at.desc&limit=1`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}&or=(patient_id.eq.${patient.patientId},patient_id.is.null)&select=cough,wheeze,prediction_label`, { headers })
       ]);
 
 
@@ -302,6 +326,11 @@ const App = () => {
       const data = await latestRes.json();
       if (data.length === 0) return;
       const latest = data[0];
+
+      // Auto-tag if untagged data is found
+      if (latest.patient_id === null) {
+        recordForPatient();
+      }
 
       let wheezeCount = 0, coughCount = 0;
       if (eventsRes.ok) {
@@ -367,7 +396,7 @@ const App = () => {
     } catch (err) {
       console.error('❌ Error fetching raw sensor data:', err);
     }
-  }, [selectedPatientId, patients, isTestingMode]);
+  }, [selectedPatientId, patients, isTestingMode, recordForPatient]);
 
   // Fetch latest sensor data from Supabase
   const fetchLatestSensorData = useCallback(async () => {
@@ -376,8 +405,8 @@ const App = () => {
       const patient = patients.find(p => p.id === selectedPatientId) || patients[0];
       if (!patient) return;
 
-      const patientFilter = `patient_id=eq.${patient.patientId}&`;
-      const patientFilterWithAmp = `&patient_id=eq.${patient.patientId}`;
+      const patientFilter = `or=(patient_id.eq.${patient.patientId},patient_id.is.null)&`;
+      const patientFilterWithAmp = `&or=(patient_id.eq.${patient.patientId},patient_id.is.null)`;
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
@@ -399,6 +428,13 @@ const App = () => {
         return;
       }
       const latest = data[0];
+      
+      // Auto-tag untagged records to the current patient
+      if (latest.patient_id === null) {
+        console.log("🔄 Auto-recording untagged data for patient:", patient.patientId);
+        recordForPatient();
+      }
+      
       console.log('📊 Latest data:', latest);
 
       let wheezeCount = 0;
@@ -503,30 +539,8 @@ const App = () => {
     } catch (error) {
       console.error('❌ Error fetching sensor data:', error);
     }
-  }, [selectedPatientId, patients, isTestingMode, userRole]);
+  }, [selectedPatientId, patients, isTestingMode, userRole, recordForPatient]);
 
-  // Stamp all NULL rows to the selected patient immediately (called by Record button)
-  const recordForPatient = useCallback(async () => {
-    const patient = patients.find(p => p.id === selectedPatientId);
-    if (!patient) return;
-    setIsRecording(true);
-    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?patient_id=is.null`, {
-        method: 'PATCH',
-        headers: { ...headers, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ patient_id: patient.patientId })
-      });
-      if (res.ok) {
-        fetchLatestSensorData();
-      } else {
-        console.error('Record failed:', await res.text());
-      }
-    } catch (e) {
-      console.error('Record error:', e);
-    }
-    setIsRecording(false);
-  }, [patients, selectedPatientId, fetchLatestSensorData]);
 
   // Fetch 24-hour vitals trend from Supabase
   const fetch24HourVitals = useCallback(async () => {
@@ -536,7 +550,7 @@ const App = () => {
       
       const patient = patients.find(p => p.id === selectedPatientId) || patients[0];
       if (!patient) return;
-      const patientFilter = `&patient_id=eq.${patient.patientId}`;
+      const patientFilter = `&or=(patient_id.eq.${patient.patientId},patient_id.is.null)`;
 
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${twentyFourHoursAgo.toISOString()}${patientFilter}&order=created_at.asc&select=created_at,spo2`,
