@@ -373,14 +373,11 @@ const App = () => {
   const fetchLatestSensorData = useCallback(async () => {
     if (isTestingMode) return;
     try {
-      let patientFilter = '';
-      let patientFilterWithAmp = '';
-      if (userRole === 'admin') {
-         const patient = patients.find(p => p.id === selectedPatientId);
-         if (!patient) return;
-         patientFilter = `patient_id=eq.${patient.patientId}&`;
-         patientFilterWithAmp = `&patient_id=eq.${patient.patientId}`;
-      }
+      const patient = patients.find(p => p.id === selectedPatientId);
+      if (!patient) return;
+
+      const patientFilter = `patient_id=eq.${patient.patientId}&`;
+      const patientFilterWithAmp = `&patient_id=eq.${patient.patientId}`;
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
@@ -537,11 +534,9 @@ const App = () => {
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
       
-      let patientFilter = '';
-      if (userRole === 'admin') {
-        const patient = patients.find(p => p.id === selectedPatientId);
-        patientFilter = patient ? `&patient_id=eq.${patient.patientId}` : '';
-      }
+      const patient = patients.find(p => p.id === selectedPatientId);
+      if (!patient) return;
+      const patientFilter = `&patient_id=eq.${patient.patientId}`;
 
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${twentyFourHoursAgo.toISOString()}${patientFilter}&order=created_at.asc&select=created_at,spo2`,

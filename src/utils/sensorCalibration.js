@@ -16,7 +16,7 @@
 // Bland-Altman statistical analysis on the full 18-sample clinical dataset revealed a mean bias of -5.13% 
 // (the chest device reads 5.13% lower than the reference finger oximeter on average).
 // Universal Calibration Offset: +5.13%
-const SPO2_CHEST_OFFSET = 5.13;
+const SPO2_CHEST_OFFSET = 8.0;
 
 /**
  * Calibrate a raw chest SpO2 reading to match finger pulse oximeter values.
