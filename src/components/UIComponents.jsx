@@ -29,7 +29,7 @@ export const HikOnLogo = ({ theme, className = "h-12" }) => (
 );
 
 // Risk Badge Component
-export const RiskBadge = ({ level }) => {
+export const RiskBadge = ({ level, label }) => {
   const styles = {
     safe: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     medium: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -38,7 +38,7 @@ export const RiskBadge = ({ level }) => {
   
   return (
     <div className={`px-4 py-1.5 rounded-xl border font-black uppercase text-[10px] tracking-widest ${styles[level] || styles.safe}`}>
-      {(level || 'safe').toUpperCase()} RISK
+      {label ? label : `${(level || 'safe').toUpperCase()} RISK`}
     </div>
   );
 };

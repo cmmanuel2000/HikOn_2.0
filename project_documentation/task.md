@@ -1,0 +1,6 @@
+- [x] Implement 3-Tier Motion Detection in `breathingRate.js`
+- [x] Build "Add Child" Pop-up Modal in `App.jsx`
+- [x] Implement Smart Alert suppression with 5-minute cooldown
+- [x] Create 2-Minute Personal Best Recording logic
+- [x] Update `fusionLogic.js` for Personal Best awareness
+- [x] Verify functionality with Luis testing data

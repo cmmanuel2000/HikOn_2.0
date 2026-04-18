@@ -1,0 +1,1104 @@
+/*040926 9:31AM - ESP-NOW & HANDSHAKE LOGIC FOR BOARD A APPLIED*/
+/*Uploads data from Board B*/
+/*Pings Board B*/
+/*Works with Board B components but with delay, does not upload in the first upload*/
+/*Still delays/fails but could be a hardware/wiring issue*/
+/*Upload logic fixed*/
+/*Pin 1 is connected to tactile button to GND*/
+
+/* =============== HikOn: Full Integrated Smart Wearable =============== */
+/* Biometrics (MAX30102 + SHT45 + MPU6050) + Cloud Audio (I2S) + Supabase Logging */
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <Wire.h>
+#include <ArduinoJson.h>
+#include "MAX30105.h"
+#include "heartRate.h"
+#include "MPU6050.h"
+#include <driver/i2s.h>
+#include <esp_heap_caps.h>
+#include <Preferences.h>
+#include <esp_task_wdt.h>
+#include <esp_err.h>
+#include <esp_idf_version.h>
+#include <stdarg.h>
+
+#include <esp_now.h>
+#include <esp_sleep.h>
+
+#if __has_include(<esp_wifi.h>)
+#include <esp_wifi.h>
+#endif
+
+// REPLACE with the MAC address you retrieved from your Board B: 5C:C0:E2:02:0F:3C
+uint8_t boardB_Address[] = {0x3C, 0x0F, 0x02, 0xE2, 0xC0, 0x5C}; 
+
+/* =============== Sleep / Wake (GP1 Button) =============== */
+// Wire a tactile button between GP1 and GND on Board A.
+// Long press (3 seconds) → sends sleep command to Board B → Board A deep sleeps.
+// Short press → Board A wakes from deep sleep (full reboot).
+// Board B wakes automatically within 5 seconds via timer wakeup.
+#define SLEEP_BUTTON_PIN   1          // GP1 — RTC GPIO, supports ext0 deep sleep wakeup
+#define LONG_PRESS_MS      3000UL     // 3 seconds for sleep trigger
+#define MSG_SLEEP_CMD      0xF1       // ESP-NOW message: Board A tells Board B to sleep
+
+static unsigned long g_bootBtnPressedMs  = 0;
+static bool          g_bootBtnHeld       = false;
+
+bool partnerReady = false;
+unsigned long lastPingTime = 0;
+const unsigned long PING_INTERVAL = 1000; // Ping every 1 second
+
+/* =============== ESP-NOW Message Types (Board A) =============== */
+static const uint8_t MSG_PING_ARE_YOU_THERE = 0xDE;
+static const uint8_t MSG_READY_ACK = 0xAC;
+static const uint8_t MSG_ENV_REQUEST = 0xE1;
+static const uint8_t MSG_ENV_RESPONSE = 0xE2;
+
+struct __attribute__((packed)) EnvResponse {
+    uint8_t type;              // MSG_ENV_RESPONSE
+    uint32_t measured_ms;
+    int16_t temp_c_x10;
+    int16_t hum_rh_x10;
+    uint16_t pm10;
+    uint16_t pm25;
+    uint16_t pm100;
+    uint16_t seq;
+};
+
+static volatile bool g_envValid = false;
+static volatile uint32_t g_envRecvMs = 0;
+static EnvResponse g_lastEnv = {0};
+
+static bool getFreshEnvSnapshot(EnvResponse& out, uint32_t maxAgeMs) {
+    if (!g_envValid) return false;
+    const uint32_t ageMs = (uint32_t)(millis() - g_envRecvMs);
+    if (ageMs > maxAgeMs) return false;
+
+    // Copy with a seq-stability check (ESP-NOW callback runs in another task).
+    uint16_t seq1 = g_lastEnv.seq;
+    out = g_lastEnv;
+    uint16_t seq2 = g_lastEnv.seq;
+    if (seq1 != seq2) {
+        out = g_lastEnv;
+    }
+    return out.type == MSG_ENV_RESPONSE;
+}
+
+static bool requestEnvSnapshot(uint32_t timeoutMs) {
+    g_envValid = false;
+    const uint8_t req = MSG_ENV_REQUEST;
+    esp_err_t err = esp_now_send(boardB_Address, &req, sizeof(req));
+    if (err != ESP_OK) {
+        Serial.printf("[Env] Request send failed: %d\n", (int)err);
+        return false;
+    }
+
+    const uint32_t start = millis();
+    while (millis() - start < timeoutMs) {
+        feed_wdt();
+        if (g_envValid) return true;
+        delay(5);
+    }
+    return false;
+}
+
+/* =============== Configuration & Credentials =============== */
+const char* WIFI_SSID = "ZTE_2.4G_w7iTVe";
+const char* WIFI_PASSWORD = "7q#Z!v9R*m2P&kX$";
+const char* SUPABASE_URL = "https://ogapdrgcwmzecbwwrmre.supabase.co";
+const char* SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nYXBkcmdjd216ZWNid3dybXJlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODM0MjE3MCwiZXhwIjoyMDczOTE4MTcwfQ.7L9zpymxD0nGE6pqk_d6Zs_GqrcBJwNUekUFBdYHLlo";
+const char* VERCEL_API_URL = "https://hik-on-2-0.vercel.app/api/analyze-audio";
+const char* ACCEL_DEVICE_ID = "hikon_s3_v1_accel_001";
+
+/* =============== Pin Definitions =============== */
+#define SDA_PIN 6
+#define SCL_PIN 7
+
+// I2S microphone (INMP441 typical wiring)
+#define I2S_WS 13
+#define I2S_SD 11
+#define I2S_SCK 12
+#define I2S_PORT I2S_NUM_0
+
+/* =============== Constants & Timing =============== */
+#define SAMPLE_RATE 16000
+#define RECORD_TIME_SEC 3
+#define SAMPLES (SAMPLE_RATE * RECORD_TIME_SEC)
+
+#define ACCEL_UPLOAD_INTERVAL_MS 1000UL
+
+const unsigned long LOW_RISK_MONITOR_MS = 30000UL;
+const unsigned long MEDIUM_RISK_MONITOR_MS = 30000UL;
+const unsigned long HIGH_RISK_MONITOR_MS = 30000UL;
+
+static const uint8_t MAX30102_I2C_ADDR = 0x57;
+
+/* =============== Global Instances & State =============== */
+MAX30105 maxSensor;
+MPU6050 mpu;
+
+static int16_t* audio_buffer = nullptr;
+
+bool max30102_connected = false;
+bool mpu6050_connected = false;
+
+float current_hr = 0.0f;
+float current_spo2 = -1.0f;
+long lastBeat = 0;
+
+// NEW: Moving average variables for stability
+const byte RATE_SIZE = 4; 
+byte rates[RATE_SIZE]; 
+byte rateSpot = 0;
+
+// NEW: Moving average for SpO2 stability
+const byte SPO2_SIZE = 5; // A slightly larger buffer for SpO2 stability
+float spo2Buffer[SPO2_SIZE];
+byte spo2Spot = 0;
+
+uint32_t max30102_last_ir = 0;
+uint32_t max30102_last_red = 0;
+int consecutiveLowReadings = 0;
+
+unsigned long lastMonitor = 0;
+unsigned long lastAccelUpload = 0;
+unsigned long currentMonitorInterval = LOW_RISK_MONITOR_MS;
+
+// SpO2 update runs on its own interval (decoupled from cloud/audio monitor cycle)
+unsigned long lastSpo2Update = 0;
+const unsigned long SPO2_UPDATE_INTERVAL_MS = 10000UL; // 10 seconds
+
+static float g_last_accel_magnitude = 0.0f;
+
+static bool g_wdt_task_added = false;
+
+// HTTPS operations can block long enough to trip the task watchdog.
+// We temporarily remove the current task from TWDT during those calls.
+struct WdtSuspendGuard {
+    bool suspended = false;
+
+    WdtSuspendGuard() {
+        if (!g_wdt_task_added) return;
+        esp_err_t err = esp_task_wdt_delete(NULL);
+        if (err == ESP_OK) {
+            g_wdt_task_added = false;
+            suspended = true;
+        }
+    }
+
+    ~WdtSuspendGuard() {
+        if (!suspended) return;
+        esp_err_t err = esp_task_wdt_add(NULL);
+        if (err == ESP_OK) {
+            g_wdt_task_added = true;
+        }
+    }
+};
+
+static inline void feed_wdt() {
+    if (g_wdt_task_added) {
+        esp_task_wdt_reset();
+    }
+}
+
+static bool safe_snprintf_append(char* dst, size_t dst_size, size_t& offset, const char* fmt, ...) {
+    if (!dst || dst_size == 0 || offset >= dst_size) return false;
+    va_list args;
+    va_start(args, fmt);
+    int written = vsnprintf(dst + offset, dst_size - offset, fmt, args);
+    va_end(args);
+    if (written < 0) return false;
+    if ((size_t)written >= (dst_size - offset)) return false;
+    offset += (size_t)written;
+    return true;
+}
+
+static String normalizeRiskForCloud(const String& risk) {
+    if (risk == "critical") return "high";
+    if (risk == "medium") return "medium";
+    return "safe";
+}
+
+// Supabase REST table name for combined sensor rows.
+// Your logs show PostgREST hinting: "public.s3_sensor_data".
+static const char* SUPABASE_SENSOR_DATA_TABLE = "s3_sensor_data";
+
+static bool supabase_extract_missing_column(const String& body, String& outColumn) {
+    // Note: PGRST message format is: Could not find the 'col' column ...
+    int start = body.indexOf("Could not find the '");
+    if (start < 0) return false;
+    start += (int)strlen("Could not find the '");
+    int end = body.indexOf("' column", start);
+    if (end < 0) {
+        end = body.indexOf("'", start);
+        if (end < 0) return false;
+    }
+    outColumn = body.substring(start, end);
+    outColumn.trim();
+    return outColumn.length() > 0;
+}
+
+static int supabase_post_with_schema_fallback(HTTPClient& http, DynamicJsonDocument& doc, const char* tag) {
+    for (int attempt = 1; attempt <= 4; attempt++) {
+        String payload;
+        payload.reserve(1024);
+        serializeJson(doc, payload);
+
+        feed_wdt();
+        int code = http.POST(payload);
+        if (code == 200 || code == 201) {
+            return code;
+        }
+
+        String body;
+        if (code > 0) {
+            body = http.getString();
+        }
+
+        if (code == 400 && body.indexOf("\"code\":\"PGRST204\"") >= 0) {
+            String missing;
+            if (supabase_extract_missing_column(body, missing)) {
+                Serial.printf("[%s] Missing column '%s' in table '%s' — dropping and retrying (%d/4)\n",
+                              tag,
+                              missing.c_str(),
+                              SUPABASE_SENSOR_DATA_TABLE,
+                              attempt);
+                JsonObject root = doc.as<JsonObject>();
+                root.remove(missing.c_str());
+                continue;
+            }
+        }
+
+        Serial.printf("[%s] Supabase POST failed (HTTP %d)\n", tag, code);
+        if (code > 0 && body.length() > 0) {
+            Serial.println(body);
+        }
+        return code;
+    }
+    return -1;
+}
+
+/* =============== Supabase Uploads =============== */
+static void upload_device_status_upsert(float hr, float spo2, float accel, const String& label, const String& risk) {
+    if (WiFi.status() != WL_CONNECTED) return;
+
+    WiFiClientSecure statusClient;
+    HTTPClient statusHttp;
+    statusClient.setInsecure();
+    statusClient.setTimeout(10000);
+
+    String url = String(SUPABASE_URL) + "/rest/v1/" + SUPABASE_SENSOR_DATA_TABLE;
+    statusHttp.begin(statusClient, url);
+    statusHttp.addHeader("Content-Type", "application/json");
+    statusHttp.addHeader("apikey", SUPABASE_KEY);
+    statusHttp.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+    statusHttp.setConnectTimeout(10000);
+    statusHttp.setTimeout(10000);
+
+    DynamicJsonDocument j(1536);
+    j["device_id"] = "hikon_s3_v1_status";
+
+    // Only include fields when valid so we don't overwrite good values with NULL on upsert.
+    if (hr > 0 && hr < 200) j["heart_rate"] = hr;
+    if (spo2 > 70 && spo2 <= 100) j["spo2"] = spo2;
+
+    j["accel_mag"] = accel;
+    j["prediction_label"] = label;
+    j["risk_level"] = normalizeRiskForCloud(risk);
+
+    Serial.println("[Status] Updating device status (UPSERT)...");
+    const int code = supabase_post_with_schema_fallback(statusHttp, j, "Status");
+    if (code == 201 || code == 200) {
+        Serial.printf("[Status] Status Updated (HTTP %d)\n", code);
+    }
+
+    statusHttp.end();
+    statusClient.stop();
+}
+static void uploadAccelToSupabase() {
+    if (WiFi.status() != WL_CONNECTED) return;
+    if (!mpu6050_connected) {
+        Serial.println("[Accel] Skipped: MPU6050 not connected");
+        return;
+    }
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setTimeout(10000);
+    HTTPClient http_accel;
+    http_accel.setConnectTimeout(10000);
+    http_accel.setTimeout(10000);
+
+    int16_t ax, ay, az, gx, gy, gz;
+    mpu.getAcceleration(&ax, &ay, &az);
+    mpu.getRotation(&gx, &gy, &gz);
+
+    http_accel.begin(client, String(SUPABASE_URL) + "/rest/v1/accel_values");
+    http_accel.addHeader("apikey", SUPABASE_KEY);
+    http_accel.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+    http_accel.addHeader("Content-Type", "application/json");
+
+    const float accel_x = (float)ax / 16384.0f;
+    const float accel_y = (float)ay / 16384.0f;
+    const float accel_z = (float)az / 16384.0f;
+    const float accel_magnitude = sqrtf((accel_x * accel_x) + (accel_y * accel_y) + (accel_z * accel_z));
+    g_last_accel_magnitude = accel_magnitude;
+
+    DynamicJsonDocument j(768);
+    j["device_id"] = ACCEL_DEVICE_ID;
+    j["accel_x"] = accel_x;
+    j["accel_y"] = accel_y;
+    j["accel_z"] = accel_z;
+    j["accel_magnitude"] = accel_magnitude;
+    j["gyro_x"] = (float)gx / 131.0f;
+    j["gyro_y"] = (float)gy / 131.0f;
+    j["gyro_z"] = (float)gz / 131.0f;
+
+    String payload;
+    serializeJson(j, payload);
+    feed_wdt();
+    int code = http_accel.POST(payload);
+    if (code != 201 && code != 200) {
+        Serial.printf("[Accel] Upload failed (HTTP %d)\n", code);
+        if (code > 0) {
+            Serial.println(http_accel.getString());
+        }
+    }
+    http_accel.end();
+    client.stop();
+}
+
+static void uploadOximeterCalibration(float hr, float spo2, uint32_t ir, uint32_t red) {
+    if (WiFi.status() != WL_CONNECTED || !max30102_connected) return;
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    HTTPClient http;
+
+    http.begin(client, String(SUPABASE_URL) + "/rest/v1/oximeter_calibration");
+    http.addHeader("apikey", SUPABASE_KEY);
+    http.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+    http.addHeader("Content-Type", "application/json");
+
+    DynamicJsonDocument doc(1024);
+    doc["device_id"] = "hikon_s3_v1_oximeter";
+    doc["sample_count"] = 1; 
+    
+    JsonObject samplesObj = doc.createNestedObject("samples");
+    JsonArray samplesArray = samplesObj.createNestedArray("samples");
+    JsonObject sample = samplesArray.createNestedObject();
+
+    sample["heart_rate"] = (hr > 0) ? hr : 0;
+    sample["spo2"] = (spo2 > 0) ? spo2 : 0;
+    sample["ir_value"] = ir;
+    sample["red_value"] = red;
+    sample["timestamp"] = millis();
+
+    String payload;
+    serializeJson(doc, payload);
+    feed_wdt();
+
+    int code = http.POST(payload);
+    if (code != 201 && code != 200) {
+        Serial.printf("[Oxi-Cal] Failed (HTTP %d)\n", code);
+    }
+    http.end();
+}
+static void upload_sensor_row(float hr, float spo2, float accel, const String& label, const String& risk) {
+    if (WiFi.status() != WL_CONNECTED) return;
+
+    // Keep table clean: "normal" + "safe" gets represented by the UPSERT status row.
+    if (label == "normal" && normalizeRiskForCloud(risk) == "safe") {
+        return;
+    } 
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setTimeout(10000);
+    HTTPClient http_row;
+    http_row.setConnectTimeout(10000);
+    http_row.setTimeout(10000);
+
+    http_row.begin(client, String(SUPABASE_URL) + "/rest/v1/" + SUPABASE_SENSOR_DATA_TABLE);
+    http_row.addHeader("apikey", SUPABASE_KEY);
+    http_row.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+    http_row.addHeader("Content-Type", "application/json");
+
+    DynamicJsonDocument j(1024);
+    j["device_id"] = "hikon_s3_v1_" + String(millis());
+    if (hr > 0) j["heart_rate"] = hr;
+    if (spo2 > 0) j["spo2"] = spo2;
+    j["accel_mag"] = accel;
+    j["prediction_label"] = label;
+    j["risk_level"] = normalizeRiskForCloud(risk);
+
+    const int code = supabase_post_with_schema_fallback(http_row, j, "Row");
+    if (code != 201 && code != 200) {
+        Serial.printf("[Row] Insert failed (HTTP %d)\n", code);
+    }
+    http_row.end();
+    client.stop();
+}
+
+/* =============== MAX30102 Helpers + SpO2 =============== */
+static bool isI2CDevicePresent(uint8_t addr) {
+    Wire.beginTransmission(addr);
+    return Wire.endTransmission() == 0;
+}
+
+static bool configureMAX30102Sensor() {
+    Wire.setClock(400000);
+    delay(20);
+
+    if (!isI2CDevicePresent(MAX30102_I2C_ADDR)) {
+        Serial.printf("[MAX30102] I2C address 0x%02X not found\n", MAX30102_I2C_ADDR);
+        return false;
+    }
+
+    bool initialized = false;
+    for (int attempt = 1; attempt <= 3; attempt++) {
+        if (maxSensor.begin(Wire, I2C_SPEED_FAST)) {
+            initialized = true;
+            break;
+        }
+        Serial.printf("[MAX30102] begin() failed (attempt %d/3)\n", attempt);
+        delay(150);
+    }
+    if (!initialized) return false;
+
+    maxSensor.setup(0x1F, 4, 2, 400, 411, 4096);
+    maxSensor.setPulseAmplitudeRed(0x14); // Lowered power to prevent saturation
+    maxSensor.setPulseAmplitudeIR(0x14);
+
+    for (int i = 0; i < 12; i++) {
+        maxSensor.check();
+        if (maxSensor.available()) {
+            max30102_last_ir = maxSensor.getIR();
+            max30102_last_red = maxSensor.getRed();
+            maxSensor.nextSample();
+        }
+        delay(20);
+    }
+    consecutiveLowReadings = 0;
+    return true;
+}
+
+static void updateSpO2() {
+    uint32_t irBuffer[30];
+    uint32_t redBuffer[30];
+
+    for (byte i = 0; i < 30; i++) {
+        unsigned long startWait = millis();
+        while (!maxSensor.available()) {
+            maxSensor.check();
+            if (millis() - startWait > 100) break;
+        }
+        irBuffer[i] = maxSensor.getIR();
+        redBuffer[i] = maxSensor.getRed();
+        maxSensor.nextSample();
+    }
+
+    uint32_t irMax = 0, irMin = 0xFFFFFFFF;
+    uint32_t redMax = 0, redMin = 0xFFFFFFFF;
+
+    for (byte i = 0; i < 30; i++) {
+        if (irBuffer[i] > irMax) irMax = irBuffer[i];
+        if (irBuffer[i] < irMin) irMin = irBuffer[i];
+        if (redBuffer[i] > redMax) redMax = redBuffer[i];
+        if (redBuffer[i] < redMin) redMin = redBuffer[i];
+    }
+
+    float f_irAC = (float)(irMax - irMin);
+    float f_redAC = (float)(redMax - redMin);
+
+    if (irMin > 0 && f_irAC > 0 && redMin > 0) {
+        float ratio = (f_redAC / (float)redMin) / (f_irAC / (float)irMin);
+        float raw_spo2 = -45.060f * ratio * ratio + 30.354f * ratio + 94.845f;
+
+        // NEW: Smoothing and Validation Logic
+        if (raw_spo2 > 100) raw_spo2 = 100;
+
+        // Only accept the reading if it's realistic (85-100) to filter out noise
+        if (raw_spo2 > 70.0f) {
+            spo2Buffer[spo2Spot++] = raw_spo2;
+            spo2Spot %= SPO2_SIZE;
+
+            float spo2Sum = 0;
+            for (byte x = 0; x < SPO2_SIZE; x++) {
+                // Initialize buffer with first valid reading if empty
+                if (spo2Buffer[x] == 0) spo2Buffer[x] = raw_spo2;
+                spo2Sum += spo2Buffer[x];
+            }
+            current_spo2 = spo2Sum / SPO2_SIZE;
+        } else {
+            // If the reading is suspiciously low (like 73%), we ignore it
+            // and keep the last known good current_spo2.
+            Serial.println("[SpO2] Discarded noisy reading.");
+        }
+    }
+}
+
+/* =============== Cloud Audio Inference (Vercel API) =============== */
+static String captureAndClassifyAudio() {
+    if (!audio_buffer) return "normal";
+    Serial.println("[Audio] Capturing 3-second sample...");
+
+    size_t bytes_read = 0;
+    int32_t sample_buffer[256];
+    int16_t* ptr = audio_buffer;
+    int samples_collected = 0;
+
+    while (samples_collected < SAMPLES) {
+        int to_read = (SAMPLES - samples_collected > 256) ? 256 : (SAMPLES - samples_collected);
+        i2s_read(I2S_PORT, sample_buffer, (size_t)to_read * 4, &bytes_read, portMAX_DELAY);
+        int read_count = (int)(bytes_read / 4);
+        for (int j = 0; j < read_count; j++) {
+            *ptr++ = (int16_t)(sample_buffer[j] >> 14);
+        }
+        samples_collected += read_count;
+        feed_wdt();
+    }
+
+    float rms = 0.0f;
+    for (int i = 0; i < SAMPLES; i++) {
+        rms += (float)audio_buffer[i] * (float)audio_buffer[i];
+    }
+    rms = sqrtf(rms / (float)SAMPLES);
+    Serial.printf("[Audio] RMS Energy: %.2f\n", rms);
+
+    if (rms < 100.0f || WiFi.status() != WL_CONNECTED) {
+        Serial.println("[Audio] Signal too quiet or WiFi lost.");
+        return "normal";
+    }
+
+    const size_t headerReserve = 64;
+    const size_t tailReserve = 4;
+    const size_t worstCharsPerSample = 7;
+    size_t json_size = headerReserve + ((size_t)SAMPLES * worstCharsPerSample) + tailReserve;
+    json_size = (json_size + 1023) & ~((size_t)1023);
+
+    char* json_payload = (char*)heap_caps_malloc(json_size, MALLOC_CAP_SPIRAM);
+    if (!json_payload) return "normal";
+
+    size_t offset = 0;
+    if (!safe_snprintf_append(json_payload, json_size, offset, "{\"device_id\":\"hikon_s3_v1\",\"data\":[")) {
+        heap_caps_free(json_payload);
+        return "normal";
+    }
+
+    float gain = 2.0f;
+    for (int i = 0; i < SAMPLES; i++) {
+        int32_t amplified = (int32_t)((float)audio_buffer[i] * gain);
+        if (amplified > 32767) amplified = 32767;
+        if (amplified < -32768) amplified = -32768;
+
+        if (!safe_snprintf_append(json_payload, json_size, offset, "%d", (int16_t)amplified)) {
+            Serial.println("[Audio] JSON overflow - skipping upload");
+            heap_caps_free(json_payload);
+            return "normal";
+        }
+
+        if (i < SAMPLES - 1) {
+            if (offset + 1 >= json_size) {
+                Serial.println("[Audio] JSON overflow (comma) - skipping upload");
+                heap_caps_free(json_payload);
+                return "normal";
+            }
+            json_payload[offset++] = ',';
+            json_payload[offset] = '\0';
+        }
+    }
+    if (!safe_snprintf_append(json_payload, json_size, offset, "]}")) {
+        heap_caps_free(json_payload);
+        return "normal";
+    }
+
+    const int MAX_RETRIES = 3;
+    const unsigned long RETRY_DELAY_MS = 30000UL;
+
+    int code = -1;
+    String responseBody;
+    String pred = "normal";
+
+    for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("[Audio] WiFi lost — reconnecting...");
+            WiFi.reconnect();
+            unsigned long start = millis();
+            while (WiFi.status() != WL_CONNECTED && millis() - start < 10000UL) {
+                delay(500);
+                feed_wdt();
+            }
+        }
+
+        WiFiClientSecure audioClient;
+        HTTPClient audioHttp;
+        audioClient.setInsecure();
+        audioClient.setTimeout(45000);
+
+        Serial.printf("[Audio] Sending to cloud (attempt %d/%d)...\n", attempt, MAX_RETRIES);
+        audioHttp.begin(audioClient, VERCEL_API_URL);
+        audioHttp.addHeader("Content-Type", "application/json");
+        audioHttp.setConnectTimeout(15000);
+        audioHttp.setTimeout(45000);
+        feed_wdt();
+
+        // HTTPS POST can block for TLS handshake / cold start.
+        // Suspend TWDT for the current task so it doesn't reboot mid-request.
+        {
+            WdtSuspendGuard wdtGuard;
+            code = audioHttp.POST((uint8_t*)json_payload, offset);
+        }
+
+        if (code == 200 || code == 201) {
+            responseBody = audioHttp.getString();
+            audioHttp.end();
+            audioClient.stop();
+            break;
+        }
+
+        Serial.printf("[Audio] Cloud inference failed (HTTP %d)\n", code);
+        if (code > 0) {
+            responseBody = audioHttp.getString();
+            Serial.println("[Audio] Response: " + responseBody);
+        }
+
+        audioHttp.end();
+        audioClient.stop();
+
+        bool isConfigError = (code >= 400 && code < 500);
+        if (isConfigError) {
+            Serial.println("[Audio] Config error — not retrying");
+            break;
+        }
+
+        if (attempt < MAX_RETRIES) {
+            Serial.printf("[Audio] Cloud may be waking up — waiting %lu sec before retry...\n", RETRY_DELAY_MS / 1000UL);
+            unsigned long waitUntil = millis() + RETRY_DELAY_MS;
+            while (millis() < waitUntil) {
+                delay(100);
+                feed_wdt();
+            }
+        }
+    }
+
+    heap_caps_free(json_payload);
+
+    if (code == 200 || code == 201) {
+        Serial.println("[Audio] Full response: " + responseBody);
+
+        DynamicJsonDocument d(1024);
+        DeserializationError err = deserializeJson(d, responseBody);
+        if (err) {
+            Serial.printf("[Audio] JSON parse error: %s\n", err.c_str());
+            return "normal";
+        }
+
+        int cough = d["inference"]["cough"] | 0;
+        int wheeze = d["inference"]["wheeze"] | 0;
+        bool gemini_verified = d["gemini_verified"] | false;
+        const char* gemini_error = d["gemini_error"] | "";
+
+        if (cough == 1) pred = "cough";
+        else if (wheeze == 1) pred = "wheeze";
+
+        Serial.printf("[Audio] Result: %s (Check: %s)\n", pred.c_str(), gemini_verified ? "GEMINI VERIFIED" : "HF-ONLY");
+        if (gemini_error && strlen(gemini_error) > 0) {
+            Serial.printf("[Audio] Gemini Error: %s\n", gemini_error);
+        }
+        return pred;
+    }
+
+    Serial.println("[Audio] Inference failed — defaulting to normal");
+    return "normal";
+}
+
+static String calculatePhysioRisk(float hr, float spo2, const String& audioLabel) {
+    // Physiological Assessment (Triage System)
+    bool hrValid = (hr > 40.0f && hr < 180.0f);
+    bool spo2Valid = (spo2 > 70.0f && spo2 <= 100.0f);
+
+    if (!hrValid || !spo2Valid) {
+        return "error";
+    }
+
+    if (hr > 140.0f || spo2 < 88.0f || audioLabel == "cough" || audioLabel == "wheeze") {
+        return "critical";
+    }
+    if (hr > 115.0f) {
+        return "medium";
+    }
+    return "safe";
+}
+
+static void printMac6(const uint8_t* mac) {
+    if (!mac) {
+        Serial.print("(null)");
+        return;
+    }
+    Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+}
+
+static void onDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
+    Serial.print("[ESP-NOW] Send status to ");
+    printMac6(mac_addr);
+    Serial.print(": ");
+    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "SUCCESS" : "FAIL");
+}
+
+// ESP-NOW recv callback signature differs between Arduino-ESP32 core versions.
+// - core v2.x (IDF4): (mac, data, len)
+// - core v3.x (IDF5): (recv_info, data, len)
+#if ESP_IDF_VERSION_MAJOR >= 5
+void onDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* incomingData, int len) {
+    const uint8_t* src = recv_info ? recv_info->src_addr : nullptr;
+    if (len > 0 && incomingData && incomingData[0] == MSG_READY_ACK) {
+        partnerReady = true;
+        if (src) {
+            Serial.print("[Handshake] READY_ACK received from ");
+            printMac6(src);
+            Serial.println(" — Board B is ONLINE. Starting system...");
+        } else {
+            Serial.println("[Handshake] Board B is ONLINE. Starting system...");
+        }
+        return;
+    }
+
+    if (incomingData && len == (int)sizeof(EnvResponse) && incomingData[0] == MSG_ENV_RESPONSE) {
+        EnvResponse r;
+        memcpy(&r, incomingData, sizeof(r));
+        g_lastEnv = r;
+        g_envRecvMs = millis();
+        g_envValid = true;
+        Serial.printf("[Env] Snapshot received: T=%.1f H=%.1f PM=%u/%u/%u\n",
+                      ((float)r.temp_c_x10) / 10.0f,
+                      ((float)r.hum_rh_x10) / 10.0f,
+                      (unsigned)r.pm10, (unsigned)r.pm25, (unsigned)r.pm100);
+    }
+}
+#else
+void onDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) {
+    (void)mac;
+    if (len > 0 && incomingData && incomingData[0] == MSG_READY_ACK) { // 0xAC is our "I'm ready" code
+        partnerReady = true;
+        Serial.print("[Handshake] READY_ACK received from ");
+        printMac6(mac);
+        Serial.println(" — Board B is ONLINE. Starting system...");
+        return;
+    }
+
+    if (incomingData && len == (int)sizeof(EnvResponse) && incomingData[0] == MSG_ENV_RESPONSE) {
+        EnvResponse r;
+        memcpy(&r, incomingData, sizeof(r));
+        g_lastEnv = r;
+        g_envRecvMs = millis();
+        g_envValid = true;
+        Serial.printf("[Env] Snapshot received: T=%.1f H=%.1f PM=%u/%u/%u\n",
+                      ((float)r.temp_c_x10) / 10.0f,
+                      ((float)r.hum_rh_x10) / 10.0f,
+                      (unsigned)r.pm10, (unsigned)r.pm25, (unsigned)r.pm100);
+    }
+}
+#endif
+/* =============== Sleep / Wake Implementation =============== */
+static void sendSleepCommand() {
+    const uint8_t cmd = MSG_SLEEP_CMD;
+    esp_now_send(boardB_Address, &cmd, sizeof(cmd));
+    delay(150); // give Board B time to receive before we sleep
+}
+
+static void enterDeepSleep() {
+    Serial.println("[Sleep] Entering deep sleep... press GP1 button to wake.");
+    Serial.flush();
+
+// Wait for button to be released before sleeping.
+    // Otherwise the still-pressed button immediately wakes the chip.
+    Serial.println("[Sleep] Release button to confirm sleep...");
+    while (digitalRead(SLEEP_BUTTON_PIN) == LOW) {
+        delay(10);
+    }
+    delay(200);
+
+    // GP1 is an RTC GPIO — supports ext0 wakeup from deep sleep.
+    // Level 0 = wake when pin goes LOW (button pressed, pulls GP1 to GND).
+     esp_sleep_enable_ext0_wakeup((gpio_num_t)SLEEP_BUTTON_PIN, 0);
+    esp_deep_sleep_start();
+}
+
+// Call this every loop iteration — handles long-press detection on GP1.
+static void handleSleepButton() {
+    bool pressed = (digitalRead(SLEEP_BUTTON_PIN) == LOW); // LOW = pressed
+
+    if (pressed && !g_bootBtnHeld) {
+        // Button just went down — start timing.
+        g_bootBtnHeld      = true;
+        g_bootBtnPressedMs = millis();
+    } else if (!pressed && g_bootBtnHeld) {
+        // Button released before long press threshold — ignore (short press).
+        g_bootBtnHeld = false;
+    } else if (pressed && g_bootBtnHeld) {
+        // Button still held — check if long press threshold reached.
+        if (millis() - g_bootBtnPressedMs >= LONG_PRESS_MS) {
+            g_bootBtnHeld = false; // reset so it doesn't fire repeatedly
+            Serial.println("[Sleep] Long press detected — sleeping...");
+            sendSleepCommand();
+            enterDeepSleep();
+        }
+    }
+}
+
+/* =============== Setup & Loop =============== */
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+    Serial.println("[HikOn] Booting...");
+
+    // Watchdog (TWDT)
+    esp_err_t wdt_err = ESP_OK;
+#if ESP_IDF_VERSION_MAJOR >= 5
+    const esp_task_wdt_config_t wdt_cfg = { .timeout_ms = 60000, .idle_core_mask = 0, .trigger_panic = false };
+    wdt_err = esp_task_wdt_reconfigure(&wdt_cfg);
+    if (wdt_err == ESP_ERR_INVALID_STATE) {
+        // TWDT not initialized yet in this core build
+        wdt_err = esp_task_wdt_init(&wdt_cfg);
+    }
+#else
+    // Older cores only support init(timeout_seconds, panic)
+    wdt_err = esp_task_wdt_init(60, false);
+#endif
+    if (wdt_err != ESP_OK && wdt_err != ESP_ERR_INVALID_STATE) {
+        Serial.printf("[WDT] Config failed: %s\n", esp_err_to_name(wdt_err));
+    }
+
+    esp_err_t add_err = esp_task_wdt_add(NULL);
+    if (add_err == ESP_OK) {
+        g_wdt_task_added = true;
+    } else {
+        Serial.printf("[WDT] Add task failed: %s\n", esp_err_to_name(add_err));
+    }
+
+    // WiFi (ESP-NOW requires STA mode; set mode before begin)
+    WiFi.mode(WIFI_STA);
+
+    // Helps prevent missed ESP-NOW packets while associated to an AP.
+    WiFi.setSleep(false);
+#if __has_include(<esp_wifi.h>)
+    (void)esp_wifi_set_ps(WIFI_PS_NONE);
+#endif
+
+    Serial.print("[Physio] MAC: ");
+    Serial.println(WiFi.macAddress());
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.print("[WiFi] Connecting");
+    unsigned long wifiStart = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 20000UL) {
+        delay(500);
+        Serial.print('.');
+        feed_wdt();
+    }
+    Serial.println();
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.printf("[WiFi] Connected (channel %u)\n", (unsigned)WiFi.channel());
+    } else {
+        Serial.println("[WiFi] Not connected (continuing)");
+    }
+
+#if __has_include(<esp_wifi.h>)
+    // Re-apply no power-save and boost TX power after association.
+    (void)esp_wifi_set_ps(WIFI_PS_NONE);
+    esp_wifi_set_max_tx_power(84); // 21 dBm — compensates for XIAO Seeed ceramic antenna
+#endif
+
+    // Audio buffer (prefer PSRAM)
+    audio_buffer = (int16_t*)heap_caps_malloc((size_t)SAMPLES * sizeof(int16_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!audio_buffer) {
+        audio_buffer = (int16_t*)malloc((size_t)SAMPLES * sizeof(int16_t));
+    }
+    if (!audio_buffer) {
+        Serial.println("[Audio] Buffer allocation failed");
+    }
+
+    // I2C + sensors
+    Wire.begin(SDA_PIN, SCL_PIN);
+    max30102_connected = configureMAX30102Sensor();
+
+    mpu.initialize();
+    mpu6050_connected = mpu.testConnection();
+
+    // Initialize ESP-NOW
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("[ESP-NOW] Error initializing");
+        return;
+    }
+    esp_now_register_recv_cb(onDataRecv);
+    esp_now_register_send_cb(onDataSent);
+
+    // Register Board B as a peer
+    esp_now_peer_info_t peerInfo;
+    memset(&peerInfo, 0, sizeof(peerInfo));
+    memcpy(peerInfo.peer_addr, boardB_Address, 6);
+    // Use channel=0 so the driver always uses the current STA channel automatically.
+    peerInfo.channel = 0;
+    peerInfo.encrypt = false;
+#if ESP_IDF_VERSION_MAJOR >= 4
+    peerInfo.ifidx = WIFI_IF_STA;
+#endif
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+        Serial.println("[ESP-NOW] Failed to add peer");
+    } else {
+        Serial.printf("[ESP-NOW] Peer added on channel %u\n", (unsigned)peerInfo.channel);
+    }
+
+    // I2S mic
+    i2s_config_t i2s_cfg;
+    memset(&i2s_cfg, 0, sizeof(i2s_cfg));
+    i2s_cfg.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
+    i2s_cfg.sample_rate = SAMPLE_RATE;
+    i2s_cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT;
+    i2s_cfg.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
+    i2s_cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+    i2s_cfg.dma_buf_count = 4;
+    i2s_cfg.dma_buf_len = 512;
+    i2s_cfg.use_apll = false;
+
+    i2s_pin_config_t i2s_pins;
+    memset(&i2s_pins, 0, sizeof(i2s_pins));
+    i2s_pins.bck_io_num = I2S_SCK;
+    i2s_pins.ws_io_num = I2S_WS;
+    i2s_pins.data_out_num = I2S_PIN_NO_CHANGE;
+    i2s_pins.data_in_num = I2S_SD;
+
+    if (i2s_driver_install(I2S_PORT, &i2s_cfg, 0, NULL) == ESP_OK) {
+        i2s_set_pin(I2S_PORT, &i2s_pins);
+        Serial.println("[I2S] Ready");
+    } else {
+        Serial.println("[I2S] Init failed");
+    }
+
+    Serial.println("[System] Initialization complete.");
+
+    // Configure GP1 as sleep button input with internal pull-up.
+    // Button wired between GP1 and GND — pressed = LOW.
+    pinMode(SLEEP_BUTTON_PIN, INPUT_PULLUP);
+    Serial.println("[Sleep] Hold GP1 button 3 sec to sleep. Press to wake (reboots).");
+}
+
+void loop() {
+    unsigned long now = millis();
+    feed_wdt();
+
+    // Check GP1 button for long-press sleep trigger.
+    handleSleepButton();
+
+    if (!partnerReady) {
+        // Send a ping every second to find Board B
+        if (now - lastPingTime >= PING_INTERVAL) {
+            if (WiFi.status() != WL_CONNECTED) {
+                Serial.println("[Handshake] Waiting for WiFi to stabilize before ESP-NOW...");
+                WiFi.reconnect();
+                lastPingTime = now;
+                return;
+            }
+            uint8_t msg = MSG_PING_ARE_YOU_THERE; // "Are you there?" code
+            esp_err_t err = esp_now_send(boardB_Address, &msg, sizeof(msg));
+            if (err != ESP_OK) {
+                Serial.printf("[Handshake] Ping send failed: %d\n", (int)err);
+            }
+            Serial.println("[Handshake] Searching for Board B...");
+            lastPingTime = now;
+        }
+        return; // Skip the rest of the loop until Board B answers
+    }
+
+    // HR (real-time)
+    if (max30102_connected) {
+        long irValue = maxSensor.getIR();
+        // Lowered threshold to 25k to catch more consistent peaks
+        if (irValue > 25000 && checkForBeat(irValue)) {
+            // First-beat guard: avoid calculating BPM from time 0
+            if (lastBeat == 0) {
+                lastBeat = millis();
+                return;
+            }
+
+            long delta = millis() - lastBeat;
+            lastBeat = millis();
+            float rawBpm = 60.0f / (delta / 1000.0f);
+
+            // Range guard: Discard impossible spikes (like the 300 BPM you saw)
+            if (rawBpm > 40 && rawBpm < 185) {
+                rates[rateSpot++] = (byte)rawBpm;
+                rateSpot %= RATE_SIZE;
+
+                // Calculate the average of the last 4 beats for a stable display
+                float avg = 0;
+                for (byte x = 0; x < RATE_SIZE; x++) avg += rates[x];
+                current_hr = avg / RATE_SIZE;
+
+                if (current_spo2 > 0) {
+                    Serial.printf("[HR] %.1f | [SPO2] %.1f%% (Last Read) | IR: %ld\n", current_hr, current_spo2, irValue);
+                } else {
+                    Serial.printf("[HR] %.1f | [SPO2] Initializing... | IR: %ld\n", current_hr, irValue);
+                }
+            }
+        }
+    }
+
+    // Periodic accel upload
+if (now - lastAccelUpload >= ACCEL_UPLOAD_INTERVAL_MS) {
+    uploadAccelToSupabase();
+    // FIX: guard with max30102_connected, same as uploadOximeterCalibration() itself does internally
+    if (max30102_connected) {
+        uploadOximeterCalibration(current_hr, current_spo2, maxSensor.getIR(), maxSensor.getRed());
+    }
+    lastAccelUpload = now;
+}
+
+    // Periodic SpO2 update (more responsive than the 60s monitor cycle)
+    if (max30102_connected && (now - lastSpo2Update >= SPO2_UPDATE_INTERVAL_MS)) {
+        lastSpo2Update = now;
+        long irValue = maxSensor.getIR();
+        if (irValue > 25000) {
+            updateSpO2();
+        }
+    }
+
+    // Interval-based monitoring
+    // Only trigger if we've passed the initial 30s warmup AND the interval is met
+    // Interval-based monitoring
+    if (now > 30000 && (now - lastMonitor >= currentMonitorInterval)) {
+        lastMonitor = now;
+        Serial.printf("\n[Monitor] Triggering analysis (interval: %lu ms)...\n", currentMonitorInterval);
+
+        // 1. Audio Capture
+        String label = captureAndClassifyAudio();
+
+        // 2. Physiological Risk Calculation
+        String overallRisk = calculatePhysioRisk(current_hr, current_spo2, label);
+        if (overallRisk == "error") {
+            // Keep monitoring reasonably often during sensor glitches.
+            overallRisk = "medium";
+        }
+
+        // 7. Set Monitor Interval
+        if (overallRisk == "critical") currentMonitorInterval = HIGH_RISK_MONITOR_MS;
+        else if (overallRisk == "medium") currentMonitorInterval = MEDIUM_RISK_MONITOR_MS;
+        else currentMonitorInterval = LOW_RISK_MONITOR_MS;
+
+        // 8. Serial Monitoring (Cleaned up)
+        Serial.printf("└─ [Physio]: %s | HR: %.1f | SpO2: %.1f%% | Audio: %s\n", overallRisk.c_str(), current_hr, current_spo2, label.c_str());
+
+	delay(500); // let radio settle after HTTPS before ESP-NOW request
+        // Request a fresh env snapshot so the status row updates together.
+        (void)requestEnvSnapshot(1000);
+
+        // 9. Uploads
+        upload_device_status_upsert(current_hr, current_spo2, g_last_accel_magnitude, label, overallRisk);
+        upload_sensor_row(current_hr, current_spo2, g_last_accel_magnitude, label, overallRisk);
+        
+        // 10. Data Reset
+    }
+}

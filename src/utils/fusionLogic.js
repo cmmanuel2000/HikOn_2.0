@@ -8,9 +8,12 @@ import {
 } from './constants.js';
 
 // Classification functions for physiological sensors
-export const classifySpo2 = (spo2Value) => {
-  if (spo2Value <= SPO2_THRESHOLDS.high_max) return 2; // High risk
-  if (spo2Value < SPO2_THRESHOLDS.safe_min) return 1;  // Medium risk
+export const classifySpo2 = (spo2Value, spo2Baseline = null) => {
+  // Personal Best Override: If at or above personal best, it is considered SAFE for this child
+  if (spo2Baseline && spo2Value >= spo2Baseline) return 0;
+  
+  if (spo2Value <= SPO2_THRESHOLDS.high_max) return 2; // High risk (<= 95%)
+  if (spo2Value < SPO2_THRESHOLDS.safe_min) return 1;  // Medium risk (< 98%)
   return 0; // Safe
 };
 
@@ -29,10 +32,10 @@ export const classifySymptomSeverity = (wheezeCount, coughs) => {
 };
 
 // Hybrid Fusion Logic (matching Python)
-export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5) => {
+export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5, spo2Baseline = null) => {
   // 1. Classify raw sensor values
   const symptomRisk = classifySymptomSeverity(wheezeCount, coughCount);
-  const spo2Risk = classifySpo2(spo2Value);
+  const spo2Risk = classifySpo2(spo2Value, spo2Baseline);
   const breathingRisk = classifyBreathingRate(breathingRate, age);
 
   const individualRisks = { symptom: symptomRisk, spo2: spo2Risk, breathing: breathingRisk };

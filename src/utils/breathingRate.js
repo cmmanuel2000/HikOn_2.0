@@ -55,11 +55,24 @@ function countZeroCrossings(values) {
   return crossings;
 }
 
+// Motion tier thresholds (based on accel_magnitude standard deviation)
+const STEADY_THRESHOLD = 0.05;  // Under this is resting/steady
+const WALKING_THRESHOLD = 0.20; // Under this is walking, above is intense/running
+
 /**
- * Determine if a window of accel data represents a "rest" state
+ * Determine the activity tier of the child
+ * Returns: 'STEADY', 'WALKING', or 'MOVING'
  */
-function isAtRest(magnitudes) {
-  return stdDev(magnitudes) < REST_THRESHOLD;
+function getMotionTier(magnitudes) {
+  const deviation = stdDev(magnitudes);
+  
+  if (deviation < STEADY_THRESHOLD) {
+    return 'STEADY';
+  } else if (deviation < WALKING_THRESHOLD) {
+    return 'WALKING';
+  } else {
+    return 'MOVING';
+  }
 }
 
 /**
@@ -105,21 +118,21 @@ export async function calculateBreathingRate() {
     const window = rows.slice(rows.length - ANALYSIS_WINDOW, rows.length);
     const magnitudes = window.map(r => r.accel_magnitude);
 
-    patientAtRest = isAtRest(magnitudes);
+    const motionStatus = getMotionTier(magnitudes);
     let bpm = 0;
 
-    if (patientAtRest) {
+    if (motionStatus === 'STEADY') {
       // Resting: Use Z-axis for zero-crossing analysis
       const zValues = window.map(r => r.accel_z);
       const zeroCrossings = countZeroCrossings(zValues);
       bpm = REST_ZC_SLOPE * zeroCrossings + REST_ZC_INTERCEPT;
-      console.log(`[BreathingRate] Rest detected. ZC_Z=${zeroCrossings}, Calculated BPM=${bpm}`);
+      console.log(`[BreathingRate] Steady detected. ZC_Z=${zeroCrossings}, Calculated BPM=${bpm}`);
     } else {
-      // Active: Use Z-axis for zero-crossing analysis
+      // Walking or Moving: Use Active patterns
       const zValues = window.map(r => r.accel_z);
       const zeroCrossings = countZeroCrossings(zValues);
       bpm = ACTIVE_ZC_SLOPE * zeroCrossings + ACTIVE_ZC_INTERCEPT;
-      console.log(`[BreathingRate] Active motion detected. ZC_Z=${zeroCrossings}, Calculated BPM=${bpm}`);
+      console.log(`[BreathingRate] Activity detected (${motionStatus}). ZC_Z=${zeroCrossings}, Calculated BPM=${bpm}`);
     }
 
     // Clamp to physiological range (children: 12-60 BPM)
@@ -127,8 +140,9 @@ export async function calculateBreathingRate() {
 
     return {
       breathingRate: bestBPM,
-      isAtRest: patientAtRest,
-      confidence: patientAtRest ? 'measured' : 'estimated'
+      isAtRest: motionStatus === 'STEADY',
+      motionStatus: motionStatus, // 'STEADY', 'WALKING', 'MOVING'
+      confidence: motionStatus === 'STEADY' ? 'measured' : 'estimated'
     };
   } catch (error) {
     console.error('[BreathingRate] Error:', error);

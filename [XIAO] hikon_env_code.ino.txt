@@ -1,0 +1,487 @@
+/*040926 11:52AM - ESP-NOW & HANDSHAKE LOGIC FOR BOARD B APPLIED*/
+/*Upload logic is blocked, only sends data to Board A*/
+/*Waits for Board A to ping*/
+/*No longer needs wifi*/
+/*Try the hikon_physio_v1.txt first, if else try hikon_physio_new.ino.txt*/
+/*041226 4:40PM added Wire.setClock(100000); // 100 kHz instead of 400 kHz — less RF noise; and place SHT45 on a longer wire*/
+/*Works with Board B components but with delay, does not upload in the first upload*/
+/*Pin 1 is connected to tactile button to GND*/
+
+/* =============== HikOn: Environmental Monitor (Standalone) =============== */
+/* PMS7003 (PM1/PM2.5/PM10) + SHT45 (Temp/Humidity) + Supabase Logging */
+
+#include <WiFi.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_SHT4x.h>
+
+#include <math.h>
+
+#include <esp_now.h>
+#include <esp_idf_version.h>
+#include <esp_sleep.h>
+
+#if __has_include(<esp_wifi.h>)
+#include <esp_wifi.h>
+#endif
+
+#if __has_include(<esp_err.h>)
+#include <esp_err.h>
+#endif
+
+/* =============== ESP-NOW Only Config (Board B) =============== */
+// Board B does NOT connect to WiFi. It uses ESP-NOW only.
+// IMPORTANT: ESP-NOW must be on the same 2.4GHz channel as Board A's WiFi.
+// Set this to Board A's WiFi channel (commonly 1, 6, or 11).
+static const uint8_t ESPNOW_CHANNEL = 3;
+
+/* =============== Pin Definitions =============== */
+#define SDA_PIN 6
+#define SCL_PIN 7
+
+// PMS7003 (UART)
+#define PMS_RX_PIN 44
+#define PMS_TX_PIN 43
+#define PMS_SET_PIN 1
+#define PMS_RESET_PIN 2
+
+/* =============== Global Instances & State =============== */
+Adafruit_SHT4x sht4;
+bool sht45_connected = false;
+
+static int g_last_pm10 = 0;
+static int g_last_pm25 = 0;
+static int g_last_pm100 = 0;
+
+static float g_last_temp = 0.0f;
+static float g_last_hum = 0.0f;
+
+static uint8_t g_esnow_channel = ESPNOW_CHANNEL;
+
+static bool g_channelLocked = false;
+static unsigned long g_lastChannelHopMs = 0;
+static uint8_t g_hopChannel = 1;
+
+static void hopEspNowChannelIfNeeded() {
+    if (g_channelLocked) return;
+    const unsigned long now = millis();
+    if (now - g_lastChannelHopMs < 400UL) return;
+    g_lastChannelHopMs = now;
+
+    // Cycle 2.4GHz channels. (1-14; 14 is rare but supported in some regions)
+    if (g_hopChannel < 1 || g_hopChannel > 14) g_hopChannel = 1;
+    setEspNowChannel(g_hopChannel);
+    g_hopChannel++;
+    if (g_hopChannel > 14) g_hopChannel = 1;
+}
+
+static void printMac6(const uint8_t* mac) {
+    if (!mac) {
+        Serial.print("(null)");
+        return;
+    }
+    Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+}
+
+static void onDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
+    Serial.print("[ESP-NOW] Send status to ");
+    printMac6(mac_addr);
+    Serial.print(": ");
+    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "SUCCESS" : "FAIL");
+}
+
+static void printBaseMac() {
+    uint64_t efuse = ESP.getEfuseMac();
+    uint8_t mac[6];
+    mac[0] = (uint8_t)((efuse >> 40) & 0xFF);
+    mac[1] = (uint8_t)((efuse >> 32) & 0xFF);
+    mac[2] = (uint8_t)((efuse >> 24) & 0xFF);
+    mac[3] = (uint8_t)((efuse >> 16) & 0xFF);
+    mac[4] = (uint8_t)((efuse >> 8) & 0xFF);
+    mac[5] = (uint8_t)((efuse >> 0) & 0xFF);
+    Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+}
+
+static void setEspNowChannel(uint8_t channel) {
+    if (channel == 0 || channel > 14) {
+        Serial.println("[ESP-NOW] Invalid channel; keeping current");
+        return;
+    }
+    g_esnow_channel = channel;
+#if __has_include(<esp_wifi.h>)
+    esp_err_t err = esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+    if (err != ESP_OK) {
+        Serial.printf("[ESP-NOW] esp_wifi_set_channel failed: %d\n", (int)err);
+    }
+#endif
+    Serial.printf("[ESP-NOW] Channel set to %u\n", (unsigned)g_esnow_channel);
+}
+
+/* =============== ESP-NOW Message Types =============== */
+static const uint8_t MSG_PING_ARE_YOU_THERE = 0xDE;
+static const uint8_t MSG_READY_ACK = 0xAC;
+static const uint8_t MSG_ENV_REQUEST = 0xE1;
+static const uint8_t MSG_ENV_RESPONSE = 0xE2;
+static const uint8_t MSG_SLEEP_CMD = 0xF1;  // Board A commands sleep
+
+/* =============== Sleep / Wake (Deep Sleep Timer, Option A) =============== */
+// When Board A sleeps, it sends MSG_SLEEP_CMD to Board B.
+// Board B enters deep sleep with a 5-second timer wakeup.
+// On each timer wake, Board B reboots, runs setup(), initializes ESP-NOW,
+// and listens for a ping for 5 seconds. If Board A's ping arrives, Board B
+// stays awake. If no ping, Board B goes back to deep sleep for another 5s.
+#define SLEEP_TIMER_SEC      5        // deep sleep duration between listen attempts
+#define AWAKE_LISTEN_MS   5000UL      // how long Board B listens for a ping after wake
+
+// Stored in RTC memory — survives deep sleep so Board B knows it should
+// be in sleep-cycling mode vs normal boot.
+RTC_DATA_ATTR bool g_rtc_sleep_mode = false;
+
+static volatile bool g_sleepRequested = false;
+static bool          g_pingReceived   = false;
+
+struct __attribute__((packed)) EnvResponse {
+    uint8_t type;              // MSG_ENV_RESPONSE
+    uint32_t measured_ms;      // millis() when packaged
+    int16_t temp_c_x10;        // temperature * 10
+    int16_t hum_rh_x10;        // humidity * 10
+    uint16_t pm10;
+    uint16_t pm25;
+    uint16_t pm100;
+    uint16_t seq;
+};
+
+static volatile bool g_envReplyPending = false;
+static uint8_t g_lastRequesterMac[6] = {0};
+static uint16_t g_envSeq = 0;
+
+static bool ensurePeer(const uint8_t* peerMac) {
+    if (!peerMac) return false;
+    if (esp_now_is_peer_exist(peerMac)) return true;
+
+    esp_now_peer_info_t peerInfo;
+    memset(&peerInfo, 0, sizeof(peerInfo));
+    memcpy(peerInfo.peer_addr, peerMac, 6);
+    peerInfo.channel = 0;       // use current radio channel automatically
+    peerInfo.encrypt = false;
+#if ESP_IDF_VERSION_MAJOR >= 4
+    peerInfo.ifidx = WIFI_IF_STA; // AP interface reaches Board A's STA radio
+#endif
+    return esp_now_add_peer(&peerInfo) == ESP_OK;
+}
+
+/* =============== ESP-NOW Handshake (Board B) =============== */
+// Board A pings with 0xDE; Board B replies with 0xAC to indicate ready.
+static void sendHandshakeAck(const uint8_t* peerMac) {
+    if (!peerMac) return;
+    (void)ensurePeer(peerMac);
+    const uint8_t ack = MSG_READY_ACK;
+    esp_err_t err = esp_now_send(peerMac, &ack, sizeof(ack));
+    if (err == ESP_OK) {
+        Serial.println("[Handshake] Sent ACK (0xAC) to Board A");
+    } else {
+        Serial.printf("[Handshake] ACK send failed: %d\n", (int)err);
+    }
+}
+
+static void queueEnvReply(const uint8_t* peerMac) {
+    if (!peerMac) return;
+    memcpy(g_lastRequesterMac, peerMac, 6);
+    g_envReplyPending = true;
+}
+
+// ESP-NOW recv callback signature differs between Arduino-ESP32 core versions.
+// - core v2.x (IDF4): (mac, data, len)
+// - core v3.x (IDF5): (recv_info, data, len)
+#if ESP_IDF_VERSION_MAJOR >= 5
+static void onDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* incomingData, int len) {
+    if (!recv_info || !incomingData || len <= 0) return;
+
+    if (incomingData[0] == MSG_SLEEP_CMD) {
+        Serial.println("[Sleep] Sleep command received from Board A.");
+        g_sleepRequested = true;
+        return;
+    }
+    if (incomingData[0] == MSG_PING_ARE_YOU_THERE) {
+        Serial.println("[Handshake] Ping received (0xDE)");
+        g_pingReceived = true; // signal to loop() that Board A is alive
+        if (!g_channelLocked) {
+            uint8_t rxCh = g_esnow_channel;
+            if (recv_info->rx_ctrl) rxCh = recv_info->rx_ctrl->channel;
+            setEspNowChannel(rxCh);
+            g_channelLocked = true;
+            Serial.printf("[ESP-NOW] Channel locked to %u\n", (unsigned)rxCh);
+        }
+        sendHandshakeAck(recv_info->src_addr);
+        return;
+    }
+    if (incomingData[0] == MSG_ENV_REQUEST) {
+        queueEnvReply(recv_info->src_addr);
+        return;
+    }
+}
+#else
+static void onDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) {
+    if (!mac || !incomingData || len <= 0) return;
+
+    if (incomingData[0] == MSG_SLEEP_CMD) {
+        Serial.println("[Sleep] Sleep command received from Board A.");
+        g_sleepRequested = true;
+        return;
+    }
+    if (incomingData[0] == MSG_PING_ARE_YOU_THERE) {
+        Serial.println("[Handshake] Ping received (0xDE)");
+        g_pingReceived = true;
+        if (!g_channelLocked) {
+            g_channelLocked = true;
+            Serial.printf("[ESP-NOW] Channel locked to current (%u)\n", (unsigned)g_esnow_channel);
+        }
+        sendHandshakeAck(mac);
+        return;
+    }
+    if (incomingData[0] == MSG_ENV_REQUEST) {
+        queueEnvReply(mac);
+        return;
+    }
+}
+#endif
+
+static void sendEnvResponseIfPending() {
+    if (!g_envReplyPending) return;
+    g_envReplyPending = false;
+
+    if (!ensurePeer(g_lastRequesterMac)) {
+        Serial.println("[Env] Failed to add peer for response");
+        return;
+    }
+
+    EnvResponse r;
+    r.type = MSG_ENV_RESPONSE;
+    r.measured_ms = millis();
+    r.temp_c_x10 = (int16_t)lroundf(g_last_temp * 10.0f);
+    r.hum_rh_x10 = (int16_t)lroundf(g_last_hum * 10.0f);
+    r.pm10 = (uint16_t)max(0, g_last_pm10);
+    r.pm25 = (uint16_t)max(0, g_last_pm25);
+    r.pm100 = (uint16_t)max(0, g_last_pm100);
+    r.seq = ++g_envSeq;
+
+    esp_err_t err = esp_now_send(g_lastRequesterMac, (const uint8_t*)&r, sizeof(r));
+    if (err == ESP_OK) {
+        Serial.println("[Env] Sent env snapshot to Board A");
+    } else {
+        Serial.printf("[Env] Env snapshot send failed: %d\n", (int)err);
+    }
+}
+
+/* =============== PMS7003 Data Structure + Parser =============== */
+struct pms7003data {
+    uint16_t framelen;
+    uint16_t pm10_standard;
+    uint16_t pm25_standard;
+    uint16_t pm100_standard;
+    uint16_t pm10_env;
+    uint16_t pm25_env;
+    uint16_t pm100_env;
+    uint16_t particles_03um;
+    uint16_t particles_05um;
+    uint16_t particles_10um;
+    uint16_t particles_25um;
+    uint16_t particles_50um;
+    uint16_t particles_100um;
+    uint16_t unused;
+    uint16_t checksum;
+};
+
+static pms7003data g_pmsData;
+
+static bool readPMSdata(Stream* s) {
+    if (!s || !s->available()) return false;
+
+    // Find start bytes (0x42 0x4D)
+    if (s->peek() != 0x42) {
+        s->read();
+        return false;
+    }
+    if (s->available() < 32) return false;
+
+    uint8_t buffer[32];
+    uint16_t sum = 0;
+    s->readBytes(buffer, 32);
+    if (buffer[0] != 0x42 || buffer[1] != 0x4D) return false;
+
+    for (uint8_t i = 0; i < 30; i++) sum += buffer[i];
+    uint16_t checksum = ((uint16_t)buffer[30] << 8) | buffer[31];
+    if (sum != checksum) {
+        Serial.println("[PMS] Checksum error");
+        return false;
+    }
+
+    g_pmsData.framelen = ((uint16_t)buffer[2] << 8) | buffer[3];
+    g_pmsData.pm10_standard = ((uint16_t)buffer[4] << 8) | buffer[5];
+    g_pmsData.pm25_standard = ((uint16_t)buffer[6] << 8) | buffer[7];
+    g_pmsData.pm100_standard = ((uint16_t)buffer[8] << 8) | buffer[9];
+    g_pmsData.pm10_env = ((uint16_t)buffer[10] << 8) | buffer[11];
+    g_pmsData.pm25_env = ((uint16_t)buffer[12] << 8) | buffer[13];
+    g_pmsData.pm100_env = ((uint16_t)buffer[14] << 8) | buffer[15];
+    g_pmsData.particles_03um = ((uint16_t)buffer[16] << 8) | buffer[17];
+    g_pmsData.particles_05um = ((uint16_t)buffer[18] << 8) | buffer[19];
+    g_pmsData.particles_10um = ((uint16_t)buffer[20] << 8) | buffer[21];
+    g_pmsData.particles_25um = ((uint16_t)buffer[22] << 8) | buffer[23];
+    g_pmsData.particles_50um = ((uint16_t)buffer[24] << 8) | buffer[25];
+    g_pmsData.particles_100um = ((uint16_t)buffer[26] << 8) | buffer[27];
+    g_pmsData.unused = ((uint16_t)buffer[28] << 8) | buffer[29];
+    g_pmsData.checksum = checksum;
+    return true;
+}
+
+
+/* =============== Board B Deep Sleep =============== */
+static void enterDeepSleepB() {
+    Serial.println("[Sleep] Board B entering deep sleep (5s timer).");
+    Serial.flush();
+    g_rtc_sleep_mode = true; // persist across deep sleep reboot
+    esp_now_deinit();
+    WiFi.mode(WIFI_OFF);
+    delay(50);
+    esp_sleep_enable_timer_wakeup((uint64_t)SLEEP_TIMER_SEC * 1000000ULL);
+    esp_deep_sleep_start(); // reboots after 5 seconds
+}
+
+/* =============== Setup & Loop =============== */
+void setup() {
+    Serial.begin(115200);
+    delay(500);
+
+    // If waking from deep sleep in sleep-cycling mode,
+    // print a short message instead of the full boot sequence.
+    if (g_rtc_sleep_mode) {
+        Serial.println("[Sleep] Board B timer wake — listening for Board A ping...");
+    } else {
+        Serial.println("[Env] Booting...");
+    }
+
+    // APSTA mode: Board B needs an AP interface so its ESP-NOW frames bypass
+    // Board A's STA receive filter. WiFi.softAP() with 500ms delays required
+    // on ESP32-S3 XIAO Seeed for the AP interface to fully initialise.
+    WiFi.mode(WIFI_MODE_APSTA);
+    delay(500);
+    WiFi.softAP("hikon_b_ap", "notused123", ESPNOW_CHANNEL, 1, 0);
+    delay(500);
+
+    if (!g_rtc_sleep_mode) {
+        Serial.print("[Env] AP MAC: ");
+        Serial.println(WiFi.softAPmacAddress());
+        Serial.print("[Env] Base MAC: ");
+        printBaseMac();
+        Serial.print("[Env] STA  MAC: ");
+        Serial.println(WiFi.macAddress());
+        Serial.print("[Env] AP   MAC: ");
+        Serial.println(WiFi.softAPmacAddress());
+#if __has_include(<esp_wifi.h>)
+        uint8_t staMac[6] = {0};
+        uint8_t apMac[6] = {0};
+        if (esp_wifi_get_mac(WIFI_IF_STA, staMac) == ESP_OK) {
+            Serial.print("[Env] STA  MAC (esp_wifi_get_mac): ");
+            printMac6(staMac);
+            Serial.println();
+        }
+        if (esp_wifi_get_mac(WIFI_IF_AP, apMac) == ESP_OK) {
+            Serial.print("[Env] AP   MAC (esp_wifi_get_mac): ");
+            printMac6(apMac);
+            Serial.println();
+        }
+#endif
+    }
+
+    WiFi.setSleep(false);
+    esp_wifi_set_max_tx_power(84);
+
+    setEspNowChannel(ESPNOW_CHANNEL);
+    Serial.printf("[Env] WiFi.channel(): %u\n", (unsigned)WiFi.channel());
+
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("[ESP-NOW] Error initializing");
+    } else {
+        esp_now_register_recv_cb(onDataRecv);
+        esp_now_register_send_cb(onDataSent);
+        Serial.println("[ESP-NOW] Ready");
+    }
+
+    Wire.setClock(100000);
+    Wire.begin(SDA_PIN, SCL_PIN);
+    delay(100);
+    sht45_connected = sht4.begin(&Wire);
+    if (!g_rtc_sleep_mode) {
+        Serial.println(sht45_connected ? "[SHT45] Connected" : "[SHT45] Not detected");
+    }
+
+    Serial1.begin(9600, SERIAL_8N1, PMS_RX_PIN, PMS_TX_PIN);
+    Serial1.setTimeout(0);
+    pinMode(PMS_SET_PIN, OUTPUT);
+    pinMode(PMS_RESET_PIN, OUTPUT);
+    digitalWrite(PMS_SET_PIN, HIGH);
+    digitalWrite(PMS_RESET_PIN, HIGH);
+    if (!g_rtc_sleep_mode) {
+        Serial.println("[PMS7003] UART ready");
+    }
+}
+
+void loop() {
+    unsigned long now = millis();
+
+    // --- Sleep request from Board A (normal operation) ---
+    if (g_sleepRequested) {
+        g_sleepRequested = false;
+        g_channelLocked  = false;
+        enterDeepSleepB();
+        return;
+    }
+
+    // --- Sleep-cycling mode: listen for ping, go back to sleep if none ---
+    if (g_rtc_sleep_mode) {
+        if (g_pingReceived) {
+            // Board A is alive — exit sleep mode and resume normal operation.
+            Serial.println("[Wake] Board B fully awake — resuming normal operation.");
+            g_rtc_sleep_mode = false;
+            g_pingReceived   = false;
+            esp_wifi_set_ps(WIFI_PS_NONE);
+            // Fall through to normal operation below.
+        } else if (millis() > AWAKE_LISTEN_MS) {
+            // 5 seconds elapsed with no ping — go back to deep sleep.
+            enterDeepSleepB();
+            return;
+        } else {
+            // Still in listen window — process ESP-NOW callbacks and wait.
+            sendEnvResponseIfPending();
+            delay(50);
+            return;
+        }
+    }
+
+    // --- Normal operation ---
+    // PMS7003 reading (non-blocking)
+    if (Serial1.available() >= 32) {
+        if (readPMSdata(&Serial1)) {
+            g_last_pm10  = (int)g_pmsData.pm10_env;
+            g_last_pm25  = (int)g_pmsData.pm25_env;
+            g_last_pm100 = (int)g_pmsData.pm100_env;
+        }
+    }
+
+    // SHT45 reading
+    float temp = 0.0f;
+    float hum  = 0.0f;
+    if (sht45_connected) {
+        sensors_event_t humidity, t;
+        sht4.getEvent(&humidity, &t);
+        temp = t.temperature;
+        hum  = humidity.relative_humidity;
+    }
+
+    g_last_temp = temp;
+    g_last_hum  = hum;
+
+    sendEnvResponseIfPending();
+
+    delay(50);
+}

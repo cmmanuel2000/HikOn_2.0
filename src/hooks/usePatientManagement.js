@@ -64,7 +64,8 @@ export const usePatientManagement = () => {
           age: row.age,
           gender: row.gender,
           patientId: row.patient_id,
-          addedDate: row.added_date
+          addedDate: row.added_date,
+          spo2Baseline: row.spo2_baseline
         }));
         setPatients(loaded);
         setPatientsLoaded(true);
@@ -165,7 +166,8 @@ export const usePatientManagement = () => {
           age: created.age,
           gender: created.gender,
           patientId: created.patient_id,
-          addedDate: created.added_date
+          addedDate: created.added_date,
+          spo2Baseline: created.spo2_baseline
         };
 
         // Insert a placeholder row in s3_sensor_data so the patient exists in sensor table
@@ -250,6 +252,33 @@ export const usePatientManagement = () => {
     }
   };
 
+  const updateSpo2Baseline = async (patientId, newBaseline) => {
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/patient_id?id=eq.${patientId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ spo2_baseline: newBaseline })
+      });
+
+      if (res.ok) {
+        setPatients(prev => prev.map(p => 
+          p.id === patientId ? { ...p, spo2Baseline: newBaseline } : p
+        ));
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('Error updating SpO2 baseline:', e);
+      return false;
+    }
+  };
+
   return {
     // State
     patients,
@@ -278,6 +307,7 @@ export const usePatientManagement = () => {
     closePatientModal,
     savePatient,
     deletePatient,
-    updateActivePatientInSupabase
+    updateActivePatientInSupabase,
+    updateSpo2Baseline
   };
 };

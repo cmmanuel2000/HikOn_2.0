@@ -205,6 +205,17 @@ const App = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isTestingMode, setIsTestingMode] = useState(false);
 
+  // --- MOTION & SMART ALERTS ---
+  const [motionStatus, setMotionStatus] = useState('STEADY');
+  const [intenseMotionEndedAt, setIntenseMotionEndedAt] = useState(null); // Timestamp when 'MOVING' stopped
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
+  // --- CALIBRATION (PERSONAL BEST) ---
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [calibrationTimer, setCalibrationTimer] = useState(120); // 2 minutes (120s)
+  const [calibrationSamples, setCalibrationSamples] = useState([]);
+
   // 24-hour SpO2 trend data for continuity chart (real Supabase data)
   const [vitalsTrend, setVitalsTrend] = useState([]);
 
@@ -236,7 +247,8 @@ const App = () => {
     closePatientModal,
     savePatient,
     deletePatient,
-    updateActivePatientInSupabase
+    updateActivePatientInSupabase,
+    updateSpo2Baseline
   } = patientManagement;
 
   // Bronchodilator Reversibility State
@@ -269,6 +281,32 @@ const App = () => {
     return () => clearInterval(interval);
   }, [medicationGivenAt, sensors?.physioRisk, treatmentStatus]);
 
+  // Smart Alert Cooldown Logic (5 minutes / 300 seconds)
+  useEffect(() => {
+    let interval;
+    if (intenseMotionEndedAt) {
+      interval = setInterval(() => {
+        const elapsedSecs = Math.floor((Date.now() - intenseMotionEndedAt) / 1000);
+        const remaining = Math.max(0, 300 - elapsedSecs);
+        setCooldownRemaining(remaining);
+        
+        if (remaining <= 0) {
+          setAlertsEnabled(true);
+          setIntenseMotionEndedAt(null);
+          clearInterval(interval);
+        }
+      }, 1000);
+    } else if (motionStatus === 'MOVING') {
+      setAlertsEnabled(false);
+      setCooldownRemaining(0);
+    } else {
+      setAlertsEnabled(true);
+      setCooldownRemaining(0);
+    }
+
+    return () => clearInterval(interval);
+  }, [intenseMotionEndedAt, motionStatus]);
+
   const handleLogMedication = () => {
     setMedicationGivenAt(Date.now());
     setTreatmentStatus('monitoring');
@@ -280,6 +318,80 @@ const App = () => {
     setTreatmentStatus(null);
     setIsAlertVisible(false);
   };
+
+  // --- PERSONAL BEST CALIBRATION LOGIC ---
+  const startPbCalibration = () => {
+    setCalibrationSamples([]);
+    setCalibrationTimer(120); // 2 minutes
+    setIsCalibrating(true);
+    setAlertMsg("Calibration Started: Keep the child steady for 2 minutes.");
+    setIsAlertVisible(true);
+  };
+
+  useEffect(() => {
+    let timerInterval;
+    let fetchInterval;
+
+    if (isCalibrating && calibrationTimer > 0) {
+      timerInterval = setInterval(() => {
+        setCalibrationTimer(prev => {
+          if (prev <= 1) {
+            setIsCalibrating(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Fetch from oximeter_calibration every 10 seconds
+      fetchInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/oximeter_calibration?order=created_at.desc&limit=1`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.length > 0) {
+              // Extract SpO2 from the samples JSONB structure if it exists
+              const samples = data[0].samples?.samples || [];
+              if (samples.length > 0) {
+                const latestSpo2 = samples[samples.length - 1].spo2;
+                if (latestSpo2 > 80) { // filter out junk
+                  setCalibrationSamples(prev => [...prev, latestSpo2]);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Calibration fetch error:', e);
+        }
+      }, 10000);
+    }
+
+    return () => {
+      clearInterval(timerInterval);
+      clearInterval(fetchInterval);
+    };
+  }, [isCalibrating]);
+
+  // Handle completion of calibration
+  useEffect(() => {
+    if (!isCalibrating && calibrationSamples.length > 0 && calibrationTimer === 0) {
+      const average = Math.round(calibrationSamples.reduce((a, b) => a + b, 0) / calibrationSamples.length);
+      const patient = patients.find(p => p.id === selectedPatientId);
+      
+      if (patient) {
+        updateSpo2Baseline(patient.id, average).then(success => {
+          if (success) {
+            setAlertMsg(`Calibration Complete! Personal Best SpO2 set to ${average}%`);
+            setIsAlertVisible(true);
+            setTimeout(() => setIsAlertVisible(false), 5000);
+          }
+        });
+      }
+      setCalibrationSamples([]);
+    }
+  }, [isCalibrating, calibrationSamples, calibrationTimer, selectedPatientId, patients]);
 
   // Stamp all NULL rows to the selected patient immediately
   const recordForPatient = useCallback(async () => {
@@ -452,34 +564,37 @@ const App = () => {
       }
 
 
-      // Calculate breathing rate from accelerometer data (at rest only)
-      const rawHeartRate = latest.heart_rate || 0;
-      const rawSpo2 = latest.spo2 || 0;
-      
       // Apply chest sensor calibration
-      const spo2 = calibrateSpO2(rawSpo2) || 0;
-      const heartRate = calibrateHeartRate(rawHeartRate) || 0;
+      const spo2 = calibrateSpO2(latest.spo2 || 0) || 0;
+      const heartRate = calibrateHeartRate(latest.heart_rate || 0) || 0;
       
-      console.log(`[Calibration] SpO2: ${rawSpo2.toFixed(1)} -> ${spo2} (+5.13 offset) | HR: ${rawHeartRate.toFixed(0)} -> ${heartRate} (median filter)`);
+      // Calculate breathing rate and motion status from accelerometer data
+      const brResult = await calculateBreathingRate();
+      const motion = brResult.motionStatus || 'STEADY';
+      const patientAtRest = brResult.isAtRest;
+      
+      setMotionStatus(motion);
 
-      // Use device-provided breathing rate from Supabase
-      let breathingRate = latest.br_rate;
-      if (breathingRate === null || breathingRate === undefined) {
-        // Fallback: estimate from heart rate only if device BR is completely missing
-        const estimatedBreathingRate = heartRate > 0 ? Math.round(heartRate / 4.5) : 16;
-        breathingRate = Math.max(12, Math.min(45, estimatedBreathingRate));
-        console.log(`[BR] Estimated from HR: ${breathingRate} BPM`);
-      } else {
-        console.log(`[BR] Device measured: ${breathingRate} BPM`);
+      // Handle Motion Cooldown for Smart Alerts
+      if (motion === 'MOVING') {
+        setIntenseMotionEndedAt(null);
+        setAlertsEnabled(false);
+      } else if (!intenseMotionEndedAt && motionStatus === 'MOVING') {
+        // Just transitioned from MOVING to something stable
+        setIntenseMotionEndedAt(Date.now());
       }
+
+      // Use device-provided breathing rate or the one we just calculated
+      let breathingRate = latest.br_rate || brResult.breathingRate || 16;
       
-      // Run physiological fusion logic with real data
+      // Run physiological fusion logic with real data and Personal Best support
       const fusionResult = hybridFusion(
         wheezeCount,
         coughCount,
         spo2 > 0 ? spo2 : 98,
         breathingRate,
-        patient?.age || 5
+        patient?.age || 5,
+        patient?.spo2Baseline
       );
 
       // Run environmental fusion logic
@@ -881,7 +996,7 @@ const App = () => {
           <div className="p-10 space-y-6">
             <div className="grid grid-cols-2 gap-6">
               {/* Physiological Panel */}
-              <div className={`border rounded-[2.5rem] p-10 shadow-sm relative overflow-hidden group ${themeClasses.card}`}>
+<div className={`border rounded-[2.5rem] p-10 shadow-sm relative overflow-hidden group ${themeClasses.card}`}>
               {/* Visual background glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-cyan-500/5 blur-3xl opacity-70 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
@@ -890,7 +1005,52 @@ const App = () => {
                   <h3 className={`text-xl font-black tracking-tight ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>Physical Status</h3>
                   <p className={`text-xs font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Physiological risk assessment</p>
                 </div>
-                <RiskBadge level={sensors.physioRisk} theme={theme} />
+                <div className="flex flex-col items-end">
+                  <RiskBadge 
+                    level={alertsEnabled ? sensors.physioRisk : 'safe'} 
+                    theme={theme} 
+                    label={!alertsEnabled ? (motionStatus === 'MOVING' ? 'MOTION' : 'STABILIZING') : null}
+                  />
+                  <div className={`mt-2 text-[10px] font-black uppercase tracking-widest ${
+                    motionStatus === 'STEADY' ? 'text-emerald-500' : 
+                    motionStatus === 'WALKING' ? 'text-amber-500' : 'text-rose-500'
+                  }`}>
+                    Status: {motionStatus}
+                  </div>
+                  {!alertsEnabled && cooldownRemaining > 0 && (
+                    <div className="mt-1 text-[9px] font-black text-rose-400 animate-pulse">
+                      Alerts paused: {Math.floor(cooldownRemaining / 60)}:{(cooldownRemaining % 60).toString().padStart(2, '0')}
+                    </div>
+                  )}
+                  {!alertsEnabled && motionStatus === 'MOVING' && (
+                    <div className="mt-1 text-[9px] font-black text-rose-400">
+                      Alerts disabled (Motion)
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Personal Best (Calibration) Header */}
+              <div className="mb-6 flex items-center justify-between relative z-10">
+                <div className={`px-4 py-2 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-blue-50/50 border-blue-100' : 'bg-blue-900/10 border-blue-800/30'}`}>
+                  <div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Personal Best SpO2</p>
+                    <p className={`text-lg font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-blue-400'}`}>
+                      {selectedPatient?.spo2Baseline ? `${selectedPatient.spo2Baseline}%` : 'Not Set'}
+                    </p>
+                  </div>
+                  <button
+                    disabled={isCalibrating}
+                    onClick={startPbCalibration}
+                    className={`px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${
+                      isCalibrating 
+                        ? 'bg-rose-500 text-white animate-pulse' 
+                        : (theme === 'light' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20')
+                    }`}
+                  >
+                    {isCalibrating ? `Recording (${calibrationTimer}s)` : 'Record Personal Best'}
+                  </button>
+                </div>
               </div>
 
               {/* Sensor Readings */}
