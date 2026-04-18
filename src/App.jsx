@@ -388,9 +388,11 @@ const App = () => {
           updateSpo2Baseline(patient.id, average).then(success => {
             if (success) {
               setAlertMsg(`Calibration Complete! Personal Best SpO2 set to ${average}%`);
-              setIsAlertVisible(true);
-              setTimeout(() => setIsAlertVisible(false), 5000);
+            } else {
+              setAlertMsg("Calibration complete, but failed to save to database. Please try again.");
             }
+            setIsAlertVisible(true);
+            setTimeout(() => setIsAlertVisible(false), 5000);
           });
         }
       } else {
@@ -858,10 +860,19 @@ const App = () => {
       
       {/* Alert Banner */}
       {isAlertVisible && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4">
-          <div className="bg-rose-500 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-rose-400 animate-bounce">
-            <AlertTriangle className="flex-shrink-0" />
-            <p className="font-bold text-sm leading-tight">{alertMsg}</p>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4 animate-in slide-in-from-top-4 duration-300">
+          <div className="bg-rose-500 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 border-2 border-rose-400">
+            <div className="flex items-center gap-4">
+              <AlertTriangle className="flex-shrink-0 animate-pulse" />
+              <p className="font-bold text-sm leading-tight">{alertMsg}</p>
+            </div>
+            <button 
+              onClick={() => setIsAlertVisible(false)}
+              className="p-1.5 hover:bg-rose-600 rounded-lg transition-colors flex-shrink-0"
+              title="Dismiss"
+            >
+              <X size={18} />
+            </button>
           </div>
         </div>
       )}
