@@ -332,18 +332,22 @@ const App = () => {
     let timerInterval;
     let fetchInterval;
 
-    if (isCalibrating && calibrationTimer > 0) {
+    if (isCalibrating) {
+      // 1. Stable Timer Interval
       timerInterval = setInterval(() => {
         setCalibrationTimer(prev => {
-          if (prev <= 1) {
+          const next = prev - 1;
+          if (next <= 0) {
             setIsCalibrating(false);
             return 0;
           }
-          return prev - 1;
+          // Update message directly during tick
+          setAlertMsg(`Calibration in progress... Keep the child steady. Time remaining: ${next}s`);
+          return next;
         });
       }, 1000);
 
-      // Fetch from oximeter_calibration every 10 seconds
+      // 2. Data Fetch Interval
       fetchInterval = setInterval(async () => {
         try {
           const res = await fetch(`${SUPABASE_URL}/rest/v1/oximeter_calibration?order=created_at.desc&limit=1`, {
@@ -352,11 +356,10 @@ const App = () => {
           if (res.ok) {
             const data = await res.json();
             if (data.length > 0) {
-              // Extract SpO2 from the samples JSONB structure if it exists
               const samples = data[0].samples?.samples || [];
               if (samples.length > 0) {
                 const latestSpo2 = samples[samples.length - 1].spo2;
-                if (latestSpo2 > 80) { // filter out junk
+                if (latestSpo2 > 80) {
                   setCalibrationSamples(prev => [...prev, latestSpo2]);
                 }
               }
@@ -369,25 +372,32 @@ const App = () => {
     }
 
     return () => {
-      clearInterval(timerInterval);
-      clearInterval(fetchInterval);
+      if (timerInterval) clearInterval(timerInterval);
+      if (fetchInterval) clearInterval(fetchInterval);
     };
-  }, [isCalibrating]);
+  }, [isCalibrating]); // Only re-run when starting/stopping
 
   // Handle completion of calibration
   useEffect(() => {
-    if (!isCalibrating && calibrationSamples.length > 0 && calibrationTimer === 0) {
-      const average = Math.round(calibrationSamples.reduce((a, b) => a + b, 0) / calibrationSamples.length);
-      const patient = patients.find(p => p.id === selectedPatientId);
-      
-      if (patient) {
-        updateSpo2Baseline(patient.id, average).then(success => {
-          if (success) {
-            setAlertMsg(`Calibration Complete! Personal Best SpO2 set to ${average}%`);
-            setIsAlertVisible(true);
-            setTimeout(() => setIsAlertVisible(false), 5000);
-          }
-        });
+    if (!isCalibrating && calibrationTimer === 0) {
+      if (calibrationSamples.length > 0) {
+        const average = Math.round(calibrationSamples.reduce((a, b) => a + b, 0) / calibrationSamples.length);
+        const patient = patients.find(p => p.id === selectedPatientId);
+        
+        if (patient) {
+          updateSpo2Baseline(patient.id, average).then(success => {
+            if (success) {
+              setAlertMsg(`Calibration Complete! Personal Best SpO2 set to ${average}%`);
+              setIsAlertVisible(true);
+              setTimeout(() => setIsAlertVisible(false), 5000);
+            }
+          });
+        }
+      } else {
+        // No samples collected - likely a connection or sensor issue
+        setAlertMsg("Calibration Failed: No sensor data detected. Please check the device connection.");
+        setIsAlertVisible(true);
+        setTimeout(() => setIsAlertVisible(false), 5000);
       }
       setCalibrationSamples([]);
     }

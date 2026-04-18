@@ -11,12 +11,8 @@
  *             Uses a moving median filter to smooth out over/under-counting.
  */
 
-// --- SpO2 Calibration ---
-// Derived from patient testing comparison mapping raw chest MAX30102 values to finger pulse oximeter ground truths.
-// Bland-Altman statistical analysis on the full 18-sample clinical dataset revealed a mean bias of -5.13% 
-// (the chest device reads 5.13% lower than the reference finger oximeter on average).
-// Universal Calibration Offset: +5.13%
-const SPO2_CHEST_OFFSET = 8.0;
+// Universal Calibration Offset: 0 (Disabled per user request)
+const SPO2_CHEST_OFFSET = 0;
 
 /**
  * Calibrate a raw chest SpO2 reading to match finger pulse oximeter values.
