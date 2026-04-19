@@ -1086,7 +1086,7 @@ const App = () => {
                         : (theme === 'light' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20')
                     }`}
                   >
-                    {isCalibrating ? `Recording (${calibrationTimer}s)` : 'Record Personal Best'}
+                    {isCalibrating ? `Recording (${calibrationTimer}s) - ${calibrationSamples.length} samples` : 'Record Personal Best'}
                   </button>
                 </div>
               </div>
