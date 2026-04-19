@@ -16,7 +16,7 @@ HikOn uses a distributed sensing approach to monitor both the patient and their 
 ### Cloud Layer (Supabase)
 - **`s3_sensor_data`**: The primary log for 30-second clinical snapshots.
 - **`accel_values`**: High-frequency 1-second storage for accelerometer magnitude (used for BR calculation and motion detection).
-- **`oximeter_calibration`**: Dedicated table for high-frequency (10s) raw oximeter samples during Personal Best sessions.
+- **`spo2_calibration`**: Dedicated table for high-frequency (10s) raw oximeter samples during Personal Best sessions (One row per sample).
 - **`patient_id`**: Central registry for children, storing metadata and their unique SpO2 Personal Best baseline.
 
 ---
@@ -26,9 +26,9 @@ The "intelligence" of HikOn 2.1.1 is defined by several layers of research-backe
 
 ### 🧬 SpO2 Personal Best (Clinical Baseline)
 The system establishes a **Personal Best (PB)** for every child when they are healthy and at rest.
-- **Calibration Session**: A 2-minute (120s) recording averages raw SpO2 data.
+- **Calibration Session**: A 2-minute (120s) recording that fetches the latest samples from `spo2_calibration`.
 - **Dynamic Thresholding**: If `Current SpO2 >= Personal Best`, the system classifies the state as **SAFE**, preventing false alarms for children with naturally lower baselines.
-- **Fallback**: If SpO2 drops below the PB, the system reverts to standard clinical benchmarks (High Risk if <= 95%, Medium Risk if < 98%).
+- **Data Structure**: The system now uses a flat "one row per sample" model for calibration data to ensure maximum reliability and lower processing overhead.
 
 ### 🏃 Motion-Aware Alert Gating
 To minimize false positives from "motion artifacts" (sensor noise caused by movement), HikOn uses a 3-tier motion detection system:

@@ -348,21 +348,18 @@ const App = () => {
         });
       }, 1000);
 
-      // 2. Data Fetch Interval
+      // Fetch from spo2_calibration every 10 seconds
       fetchInterval = setInterval(async () => {
         try {
-          const res = await fetch(`${SUPABASE_URL}/rest/v1/oximeter_calibration?order=created_at.desc&limit=1`, {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?order=created_at.desc&limit=1`, {
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
           });
           if (res.ok) {
             const data = await res.json();
             if (data.length > 0) {
-              const samples = data[0].samples?.samples || [];
-              if (samples.length > 0) {
-                const latestSpo2 = samples[samples.length - 1].spo2;
-                if (latestSpo2 > 80) {
-                  setCalibrationSamples(prev => [...prev, latestSpo2]);
-                }
+              const latestSpo2 = parseFloat(data[0].spo2);
+              if (latestSpo2 > 80) {
+                setCalibrationSamples(prev => [...prev, latestSpo2]);
               }
             }
           }
@@ -382,13 +379,29 @@ const App = () => {
   useEffect(() => {
     if (!isCalibrating && calibrationTimer === 0) {
       if (calibrationSamples.length > 0) {
-        const average = Math.round(calibrationSamples.reduce((a, b) => a + b, 0) / calibrationSamples.length);
+        // 1. Calculate Initial Statistics (Mean & SD)
+        const n = calibrationSamples.length;
+        const mean = calibrationSamples.reduce((a, b) => a + b, 0) / n;
+        const stdDev = Math.sqrt(calibrationSamples.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n);
+        
+        // 2. Filter Outliers (1.5 SD Threshold)
+        // If SD is 0 (all samples identical), filtering is skipped.
+        const cleanSamples = stdDev === 0 
+          ? calibrationSamples 
+          : calibrationSamples.filter(s => Math.abs(s - mean) <= 1.5 * stdDev);
+        
+        const rejectedCount = n - cleanSamples.length;
+        const average = Math.round(cleanSamples.reduce((a, b) => a + b, 0) / cleanSamples.length);
+        
         const patient = patients.find(p => p.id === selectedPatientId);
         
         if (patient) {
           updateSpo2Baseline(patient.id, average).then(success => {
             if (success) {
-              setAlertMsg(`Calibration Complete! Personal Best SpO2 set to ${average}%`);
+              const msg = rejectedCount > 0 
+                ? `Calibration Complete! Personal Best SpO2 set to ${average}% (${rejectedCount} outliers rejected).`
+                : `Calibration Complete! Personal Best SpO2 set to ${average}%`;
+              setAlertMsg(msg);
             } else {
               setAlertMsg("Calibration complete, but failed to save to database. Please try again.");
             }

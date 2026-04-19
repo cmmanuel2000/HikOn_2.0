@@ -27,17 +27,20 @@ ALTER TABLE s3_sensor_data ADD COLUMN cough INTEGER DEFAULT 0;
 ALTER TABLE s3_sensor_data ADD COLUMN wheeze INTEGER DEFAULT 0;
 ```
 
-## 3. High-Frequency Calibration (`03_oximeter_calibration.sql`)
-Dedicated table for the 2-minute "Record Personal Best" workflow.
+## 3. SpO2 Calibration (`03_spo2_calibration.sql`)
+New, high-performance table for the "Record Personal Best" workflow. Each sample is stored as an individual row for better real-time processing.
 
 ```sql
-CREATE TABLE IF NOT EXISTS oximeter_calibration (
+CREATE TABLE IF NOT EXISTS spo2_calibration (
     id SERIAL PRIMARY KEY,
     device_id TEXT,
-    sample_count INTEGER,
-    samples JSONB, -- Stores the high-frequency IR/RED/SpO2 array
+    spo2 NUMERIC,
+    heart_rate NUMERIC,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Index for faster fetching of the latest calibration values
+CREATE INDEX IF NOT EXISTS idx_spo2_calib_created ON spo2_calibration(created_at DESC);
 ```
 
 ---
