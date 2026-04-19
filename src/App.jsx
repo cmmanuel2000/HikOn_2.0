@@ -754,6 +754,8 @@ const App = () => {
     const timer = setInterval(() => {
       fetchLatestSensorData();
       fetchRawSensorData();
+      // Proactively associate any untagged background data with the active patient
+      recordForPatient();
     }, 5000);
     
     const vitalsTimer = setInterval(() => {
