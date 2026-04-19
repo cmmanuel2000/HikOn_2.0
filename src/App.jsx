@@ -397,7 +397,7 @@ const App = () => {
         const patient = patients.find(p => p.id === selectedPatientId);
         
         if (patient) {
-          updateSpo2Baseline(patient.id, average).then(success => {
+          updateSpo2Baseline(patient.patientId, average).then(success => {
             if (success) {
               const msg = rejectedCount > 0 
                 ? `Calibration Complete! Personal Best SpO2 set to ${average}% (${rejectedCount} outliers rejected).`

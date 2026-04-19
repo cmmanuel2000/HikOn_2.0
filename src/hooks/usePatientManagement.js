@@ -252,11 +252,11 @@ export const usePatientManagement = () => {
     }
   };
 
-  const updateSpo2Baseline = async (patientId, newBaseline) => {
+  const updateSpo2Baseline = async (patientIdString, newBaseline) => {
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
     
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/patient_id?id=eq.${patientId}`, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/patient_id?patient_id=eq.${patientIdString}`, {
         method: 'PATCH',
         headers: {
           'apikey': SUPABASE_KEY,
