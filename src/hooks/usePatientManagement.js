@@ -268,11 +268,14 @@ export const usePatientManagement = () => {
 
       if (res.ok) {
         setPatients(prev => prev.map(p => 
-          p.id === patientId ? { ...p, spo2Baseline: newBaseline } : p
+          p.patientId === patientIdString ? { ...p, spo2Baseline: newBaseline } : p
         ));
         return true;
+      } else {
+        const errorText = await res.text();
+        console.error('Supabase Patch Error:', res.status, errorText);
+        return false;
       }
-      return false;
     } catch (e) {
       console.error('Error updating SpO2 baseline:', e);
       return false;
