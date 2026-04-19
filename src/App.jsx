@@ -365,6 +365,7 @@ const App = () => {
           }
         } catch (e) {
           console.error('Calibration fetch error:', e);
+          setAlertMsg(`Connection Error: Could not reach spo2_calibration table. Check your database.`);
         }
       }, 10000);
     }
