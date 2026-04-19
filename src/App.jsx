@@ -40,7 +40,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Clock
+  Clock,
+  X
 } from 'lucide-react';
 
 // --- SUPABASE CONFIG ---
