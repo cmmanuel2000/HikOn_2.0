@@ -392,10 +392,9 @@ const App = () => {
           : calibrationSamples.filter(s => Math.abs(s - mean) <= 1.5 * stdDev);
         
         const rejectedCount = n - cleanSamples.length;
-        const average = Math.round(cleanSamples.reduce((a, b) => a + b, 0) / cleanSamples.length);
-        
-        const patient = patients.find(p => p.id === selectedPatientId);
-        
+        // Disarm the completion check so it doesn't trigger again
+        setCalibrationTimer(-1);
+
         if (patient) {
           updateSpo2Baseline(patient.patientId, average).then(success => {
             if (success) {
@@ -416,9 +415,8 @@ const App = () => {
         setIsAlertVisible(true);
         setTimeout(() => setIsAlertVisible(false), 5000);
       }
-      setCalibrationSamples([]);
     }
-  }, [isCalibrating, calibrationSamples, calibrationTimer, selectedPatientId, patients]);
+  }, [isCalibrating, calibrationTimer, patients, selectedPatientId]);
 
   // Stamp all NULL rows to the selected patient immediately
   const recordForPatient = useCallback(async () => {
