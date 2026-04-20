@@ -38,9 +38,15 @@ export const classifyBreathingRate = (bpm, age = 5, breathingBaseline = null) =>
   return 0; // Risk 0 (Safe)
 };
 
-export const classifySymptomSeverity = (wheezeCount, coughs) => {
-  if (wheezeCount > 0 && coughs > 5) return 2; // High risk
-  if (wheezeCount > 0 || coughs > 0) return 1; // Medium risk
+export const classifySymptomSeverity = (burstCoughs, burstWheezes) => {
+  // Burst-Based Detection (60-second rolling window)
+  
+  // High Risk: High frequency burst
+  if (burstCoughs > 5 || burstWheezes >= 6) return 2; 
+  
+  // Medium Risk: Occasional symptoms detected
+  if (burstCoughs >= 1 || burstWheezes >= 3) return 1; 
+  
   return 0; // Safe
 };
 

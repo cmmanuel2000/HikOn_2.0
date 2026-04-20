@@ -599,13 +599,30 @@ const App = () => {
 
       let wheezeCount = 0;
       let coughCount = 0;
+      let burstWheezeCount = 0;
+      let burstCoughCount = 0;
+
       if (eventsRes.ok) {
         const events = await eventsRes.json();
+        const oneMinuteAgo = Date.now() - 60000;
+
+        // Daily Counts
         wheezeCount = events.reduce((sum, e) => {
           const isWheeze = e.wheeze === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('wheeze'));
           return sum + (isWheeze ? 1 : 0);
         }, 0);
         coughCount = events.reduce((sum, e) => {
+          const isCough = e.cough === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('cough'));
+          return sum + (isCough ? 1 : 0);
+        }, 0);
+
+        // ⏱️ Burst Detection: 60-Second Rolling Window
+        const recentEvents = events.filter(e => new Date(e.created_at).getTime() > oneMinuteAgo);
+        burstWheezeCount = recentEvents.reduce((sum, e) => {
+          const isWheeze = e.wheeze === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('wheeze'));
+          return sum + (isWheeze ? 1 : 0);
+        }, 0);
+        burstCoughCount = recentEvents.reduce((sum, e) => {
           const isCough = e.cough === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('cough'));
           return sum + (isCough ? 1 : 0);
         }, 0);
@@ -637,8 +654,8 @@ const App = () => {
       
       // Run physiological fusion logic with real data and Personal Best support
       const fusionResult = hybridFusion(
-        wheezeCount,
-        coughCount,
+        burstCoughCount,
+        burstWheezeCount,
         spo2 > 0 ? spo2 : 98,
         breathingRate,
         patient?.age || 5,
