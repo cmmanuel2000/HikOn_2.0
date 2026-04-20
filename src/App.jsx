@@ -212,10 +212,11 @@ const App = () => {
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
-  // --- CALIBRATION (PERSONAL BEST) ---
+  // --- CALIBRATION (PERSONAL BEST) ---  // Clinical Calibration States
   const [isCalibrating, setIsCalibrating] = useState(false);
-  const [calibrationTimer, setCalibrationTimer] = useState(120); // 2 minutes (120s)
+  const [calibrationTimer, setCalibrationTimer] = useState(0);
   const [calibrationSamples, setCalibrationSamples] = useState([]);
+  const [brSamples, setBrSamples] = useState([]);
 
   // 24-hour SpO2 trend data for continuity chart (real Supabase data)
   const [vitalsTrend, setVitalsTrend] = useState([]);
@@ -322,10 +323,11 @@ const App = () => {
 
   // --- PERSONAL BEST CALIBRATION LOGIC ---
   const startPbCalibration = () => {
-    setCalibrationSamples([]);
-    setCalibrationTimer(120); // 2 minutes
     setIsCalibrating(true);
-    setAlertMsg("Calibration Started: Keep the child steady for 2 minutes.");
+    setCalibrationTimer(120);
+    setCalibrationSamples([]); // Reset specifically when STARTING
+    setBrSamples([]);
+    setAlertMsg("Calibration started. Please remain steady for 2 minutes...");
     setIsAlertVisible(true);
   };
 
@@ -357,15 +359,21 @@ const App = () => {
           if (res.ok) {
             const data = await res.json();
             if (data.length > 0) {
-              const latestSpo2 = parseFloat(data[0].spo2);
+              const latest = data[0];
+              const latestSpo2 = parseFloat(latest.spo2);
+              const latestBr = parseFloat(latest.br_rate);
+
               if (latestSpo2 > 80) {
                 setCalibrationSamples(prev => [...prev, latestSpo2]);
+              }
+              if (latestBr > 0) {
+                setBrSamples(prev => [...prev, latestBr]);
               }
             }
           }
         } catch (e) {
           console.error('Calibration fetch error:', e);
-          setAlertMsg(`Connection Error: Could not reach spo2_calibration table. Check your database.`);
+          setAlertMsg(`Connection Error: Could not reach calibration feed. Check your database.`);
         }
       }, 10000);
     }
@@ -380,30 +388,34 @@ const App = () => {
   useEffect(() => {
     if (!isCalibrating && calibrationTimer === 0) {
       if (calibrationSamples.length > 0) {
-        // 1. Calculate Initial Statistics (Mean & SD)
-        const n = calibrationSamples.length;
-        const mean = calibrationSamples.reduce((a, b) => a + b, 0) / n;
-        const stdDev = Math.sqrt(calibrationSamples.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n);
-        
-        // 2. Filter Outliers (1.5 SD Threshold)
-        // If SD is 0 (all samples identical), filtering is skipped.
-        const cleanSamples = stdDev === 0 
+        // --- 1. Process SpO2 Samples ---
+        const n_spo2 = calibrationSamples.length;
+        const mean_spo2 = calibrationSamples.reduce((a, b) => a + b, 0) / n_spo2;
+        const stdDev_spo2 = Math.sqrt(calibrationSamples.reduce((sum, val) => sum + Math.pow(val - mean_spo2, 2), 0) / n_spo2);
+        const cleanSpo2 = stdDev_spo2 === 0 
           ? calibrationSamples 
-          : calibrationSamples.filter(s => Math.abs(s - mean) <= 1.5 * stdDev);
-        
-        const rejectedCount = n - cleanSamples.length;
-        const average = Math.round(cleanSamples.reduce((a, b) => a + b, 0) / cleanSamples.length);
+          : calibrationSamples.filter(s => Math.abs(s - mean_spo2) <= 1.5 * stdDev_spo2);
+        const avgSpo2 = Math.round(cleanSpo2.reduce((a, b) => a + b, 0) / cleanSpo2.length);
+
+        // --- 2. Process Breathing Rate Samples ---
+        let avgBr = null;
+        if (brSamples.length > 0) {
+          const n_br = brSamples.length;
+          const mean_br = brSamples.reduce((a, b) => a + b, 0) / n_br;
+          const stdDev_br = Math.sqrt(brSamples.reduce((sum, val) => sum + Math.pow(val - mean_br, 2), 0) / n_br);
+          const cleanBr = stdDev_br === 0 
+            ? brSamples 
+            : brSamples.filter(s => Math.abs(s - mean_br) <= 1.5 * stdDev_br);
+          avgBr = Math.round(cleanBr.reduce((a, b) => a + b, 0) / cleanBr.length);
+        }
+
         const patient = patients.find(p => p.id === selectedPatientId);
-        
-        // Disarm the completion check so it doesn't trigger again
-        setCalibrationTimer(-1);
+        setCalibrationTimer(-1); // Disarm
 
         if (patient) {
-          updateSpo2Baseline(patient.patientId, average).then(success => {
+          updateClinicalBaselines(patient.patientId, avgSpo2, avgBr).then(success => {
             if (success) {
-              const msg = rejectedCount > 0 
-                ? `Calibration Complete! Personal Best SpO2 set to ${average}% (${rejectedCount} outliers rejected).`
-                : `Calibration Complete! Personal Best SpO2 set to ${average}%`;
+              const msg = `Calibration Complete! Personal Best SpO2 set to ${avgSpo2}% and Resting BR set to ${avgBr || 'N/A'} bpm.`;
               setAlertMsg(msg);
               
               // Stamp the raw calibration data with this patient's ID for audit logs
@@ -422,13 +434,12 @@ const App = () => {
           });
         }
       } else {
-        // No samples collected - likely a connection or sensor issue
         setAlertMsg("Calibration Failed: No sensor data detected. Please check the device connection.");
         setIsAlertVisible(true);
         setTimeout(() => setIsAlertVisible(false), 5000);
       }
     }
-  }, [isCalibrating, calibrationTimer, patients, selectedPatientId]);
+  }, [isCalibrating, calibrationTimer, patients, selectedPatientId, calibrationSamples, brSamples]);
 
   // Stamp all NULL rows to the selected patient immediately
   const recordForPatient = useCallback(async () => {
@@ -631,7 +642,8 @@ const App = () => {
         spo2 > 0 ? spo2 : 98,
         breathingRate,
         patient?.age || 5,
-        patient?.spo2Baseline
+        patient?.spo2Baseline,
+        patient?.breathingBaseline
       );
 
       // Run environmental fusion logic
@@ -1078,14 +1090,23 @@ const App = () => {
                 </div>
               </div>
 
-              {/* Personal Best (Calibration) Header */}
+              {/* Clinical Baselines Header */}
               <div className="mb-6 flex items-center justify-between relative z-10">
-                <div className={`px-4 py-2 rounded-2xl border flex items-center gap-3 ${theme === 'light' ? 'bg-blue-50/50 border-blue-100' : 'bg-blue-900/10 border-blue-800/30'}`}>
-                  <div>
-                    <p className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Personal Best SpO2</p>
-                    <p className={`text-lg font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-blue-400'}`}>
-                      {selectedPatient?.spo2Baseline ? `${selectedPatient.spo2Baseline}%` : 'Not Set'}
-                    </p>
+                <div className={`px-4 py-2 rounded-2xl border flex items-center gap-6 ${theme === 'light' ? 'bg-blue-50/50 border-blue-100' : 'bg-blue-900/10 border-blue-800/30'}`}>
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <p className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>PB SpO2</p>
+                      <p className={`text-lg font-black ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-blue-400'}`}>
+                        {selectedPatient?.spo2Baseline ? `${selectedPatient.spo2Baseline}%` : 'Not Set'}
+                      </p>
+                    </div>
+                    <div className={`w-px h-8 ${theme === 'light' ? 'bg-blue-200' : 'bg-blue-800'}`}></div>
+                    <div>
+                      <p className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Resting BR</p>
+                      <p className={`text-lg font-black ${theme === 'light' ? 'text-cyan-600' : 'text-cyan-400'}`}>
+                        {selectedPatient?.breathingBaseline ? `${selectedPatient.breathingBaseline} bpm` : 'Not Set'}
+                      </p>
+                    </div>
                   </div>
                   <button
                     disabled={isCalibrating || !selectedPatientId}
@@ -1102,7 +1123,7 @@ const App = () => {
                       ? 'Select Patient to Calibrate' 
                       : isCalibrating 
                         ? `Recording (${calibrationTimer}s) - ${calibrationSamples.length} samples` 
-                        : 'Record Personal Best'}
+                        : 'Record Clinical Baselines'}
                   </button>
                 </div>
               </div>

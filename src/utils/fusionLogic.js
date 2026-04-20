@@ -17,7 +17,15 @@ export const classifySpo2 = (spo2Value, spo2Baseline = null) => {
   return 0; // Safe
 };
 
-export const classifyBreathingRate = (bpm, age = 5) => {
+export const classifyBreathingRate = (bpm, age = 5, breathingBaseline = null) => {
+  // Baseline-based detection (Standard Pediatric Tachypnea Markers)
+  if (breathingBaseline) {
+    if (bpm >= breathingBaseline * 1.4) return 2; // High risk (>40% increase)
+    if (bpm >= breathingBaseline * 1.2) return 1; // Medium risk (>20% increase)
+    return 0; // Safe
+  }
+
+  // Age-based fallback
   const thresholds = age >= 6 ? BREATHING_THRESHOLDS_6_TO_12_YRS : BREATHING_THRESHOLDS_3_TO_7_YRS;
   
   if (bpm > thresholds.medium_max) return 2; // High risk
@@ -32,11 +40,11 @@ export const classifySymptomSeverity = (wheezeCount, coughs) => {
 };
 
 // Hybrid Fusion Logic (matching Python)
-export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5, spo2Baseline = null) => {
+export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5, spo2Baseline = null, breathingBaseline = null) => {
   // 1. Classify raw sensor values
   const symptomRisk = classifySymptomSeverity(wheezeCount, coughCount);
   const spo2Risk = classifySpo2(spo2Value, spo2Baseline);
-  const breathingRisk = classifyBreathingRate(breathingRate, age);
+  const breathingRisk = classifyBreathingRate(breathingRate, age, breathingBaseline);
 
   const individualRisks = { symptom: symptomRisk, spo2: spo2Risk, breathing: breathingRisk };
   const symptomLog = { wheeze: wheezeCount, coughs: coughCount };

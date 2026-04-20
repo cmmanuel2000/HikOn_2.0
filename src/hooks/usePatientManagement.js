@@ -65,7 +65,8 @@ export const usePatientManagement = () => {
           gender: row.gender,
           patientId: row.patient_id,
           addedDate: row.added_date,
-          spo2Baseline: row.spo2_baseline
+          spo2Baseline: row.spo2_baseline,
+          breathingBaseline: row.breathing_baseline
         }));
         setPatients(loaded);
         setPatientsLoaded(true);
@@ -167,7 +168,8 @@ export const usePatientManagement = () => {
           gender: created.gender,
           patientId: created.patient_id,
           addedDate: created.added_date,
-          spo2Baseline: created.spo2_baseline
+          spo2Baseline: created.spo2_baseline,
+          breathingBaseline: created.breathing_baseline
         };
 
         // Insert a placeholder row in s3_sensor_data so the patient exists in sensor table
@@ -252,7 +254,7 @@ export const usePatientManagement = () => {
     }
   };
 
-  const updateSpo2Baseline = async (patientIdString, newBaseline) => {
+  const updateClinicalBaselines = async (patientIdString, newSpo2, newBr) => {
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
     
     try {
@@ -263,12 +265,15 @@ export const usePatientManagement = () => {
           'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ spo2_baseline: newBaseline })
+        body: JSON.stringify({ 
+          spo2_baseline: newSpo2,
+          breathing_baseline: newBr
+        })
       });
 
       if (res.ok) {
         setPatients(prev => prev.map(p => 
-          p.patientId === patientIdString ? { ...p, spo2Baseline: newBaseline } : p
+          p.patientId === patientIdString ? { ...p, spo2Baseline: newSpo2, breathingBaseline: newBr } : p
         ));
         return true;
       } else {
@@ -277,7 +282,7 @@ export const usePatientManagement = () => {
         return false;
       }
     } catch (e) {
-      console.error('Error updating SpO2 baseline:', e);
+      console.error('Error updating baselines:', e);
       return false;
     }
   };
@@ -311,6 +316,6 @@ export const usePatientManagement = () => {
     savePatient,
     deletePatient,
     updateActivePatientInSupabase,
-    updateSpo2Baseline
+    updateClinicalBaselines
   };
 };
