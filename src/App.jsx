@@ -392,6 +392,9 @@ const App = () => {
           : calibrationSamples.filter(s => Math.abs(s - mean) <= 1.5 * stdDev);
         
         const rejectedCount = n - cleanSamples.length;
+        const average = Math.round(cleanSamples.reduce((a, b) => a + b, 0) / cleanSamples.length);
+        const patient = patients.find(p => p.id === selectedPatientId);
+        
         // Disarm the completion check so it doesn't trigger again
         setCalibrationTimer(-1);
 
