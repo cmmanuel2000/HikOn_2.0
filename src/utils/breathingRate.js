@@ -71,7 +71,7 @@ function getMotionTier(magnitudes) {
   } else if (deviation < WALKING_THRESHOLD) {
     return 'WALKING';
   } else {
-    return 'MOVING';
+    return 'RUNNING';
   }
 }
 

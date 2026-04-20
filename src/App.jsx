@@ -604,11 +604,11 @@ const App = () => {
       setMotionStatus(motion);
 
       // Handle Motion Cooldown for Smart Alerts
-      if (motion === 'MOVING') {
+      if (motion === 'RUNNING') {
         setIntenseMotionEndedAt(null);
         setAlertsEnabled(false);
-      } else if (!intenseMotionEndedAt && motionStatus === 'MOVING') {
-        // Just transitioned from MOVING to something stable
+      } else if (!intenseMotionEndedAt && motionStatus === 'RUNNING') {
+        // Just transitioned from RUNNING to something stable
         setIntenseMotionEndedAt(Date.now());
       }
 
@@ -1048,7 +1048,7 @@ const App = () => {
                   <RiskBadge 
                     level={alertsEnabled ? sensors.physioRisk : 'safe'} 
                     theme={theme} 
-                    label={!alertsEnabled ? (motionStatus === 'MOVING' ? 'MOTION' : 'STABILIZING') : null}
+                    label={!alertsEnabled ? (motionStatus === 'RUNNING' ? 'MOTION' : 'STABILIZING') : null}
                   />
                   <div className={`mt-2 text-[10px] font-black uppercase tracking-widest ${
                     motionStatus === 'STEADY' ? 'text-emerald-500' : 
@@ -1061,7 +1061,7 @@ const App = () => {
                       Alerts paused: {Math.floor(cooldownRemaining / 60)}:{(cooldownRemaining % 60).toString().padStart(2, '0')}
                     </div>
                   )}
-                  {!alertsEnabled && motionStatus === 'MOVING' && (
+                  {!alertsEnabled && motionStatus === 'RUNNING' && (
                     <div className="mt-1 text-[9px] font-black text-rose-400">
                       Alerts disabled (Motion)
                     </div>
