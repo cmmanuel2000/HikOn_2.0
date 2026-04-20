@@ -405,6 +405,15 @@ const App = () => {
                 ? `Calibration Complete! Personal Best SpO2 set to ${average}% (${rejectedCount} outliers rejected).`
                 : `Calibration Complete! Personal Best SpO2 set to ${average}%`;
               setAlertMsg(msg);
+              
+              // Stamp the raw calibration data with this patient's ID for audit logs
+              const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+              fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?patient_id=is.null`, {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({ patient_id: patient.patientId })
+              }).catch(e => console.error('Audit stamp failed:', e));
+
             } else {
               setAlertMsg("Calibration complete, but failed to save to database. Please try again.");
             }
@@ -1079,15 +1088,21 @@ const App = () => {
                     </p>
                   </div>
                   <button
-                    disabled={isCalibrating}
+                    disabled={isCalibrating || !selectedPatientId}
                     onClick={startPbCalibration}
                     className={`px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${
                       isCalibrating 
                         ? 'bg-rose-500 text-white animate-pulse' 
+                        : !selectedPatientId
+                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                         : (theme === 'light' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20')
                     }`}
                   >
-                    {isCalibrating ? `Recording (${calibrationTimer}s) - ${calibrationSamples.length} samples` : 'Record Personal Best'}
+                    {!selectedPatientId 
+                      ? 'Select Patient to Calibrate' 
+                      : isCalibrating 
+                        ? `Recording (${calibrationTimer}s) - ${calibrationSamples.length} samples` 
+                        : 'Record Personal Best'}
                   </button>
                 </div>
               </div>
