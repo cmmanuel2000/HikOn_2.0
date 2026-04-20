@@ -17,19 +17,15 @@ export const classifySpo2 = (spo2Value, spo2Baseline = null) => {
   return 0; // Safe
 };
 
-export const classifyBreathingRate = (bpm, age = 5, breathingBaseline = null) => {
-  // Baseline-based detection (Standard Pediatric Tachypnea Markers)
-  if (breathingBaseline) {
-    if (bpm >= breathingBaseline * 1.4) return 2; // High risk (>40% increase)
-    if (bpm >= breathingBaseline * 1.2) return 1; // Medium risk (>20% increase)
-    return 0; // Safe
-  }
-
-  // Age-based fallback
+export const classifyBreathingRate = (bpm, age = 5) => {
   const thresholds = age >= 6 ? BREATHING_THRESHOLDS_6_TO_12_YRS : BREATHING_THRESHOLDS_3_TO_7_YRS;
   
-  if (bpm > thresholds.medium_max) return 2; // High risk
-  if (bpm > thresholds.safe_max) return 1;   // Medium risk
+  // High risk (Very fast)
+  if (bpm > thresholds.medium_max) return 2; 
+  
+  // Medium risk (Elevated or Slow)
+  if (bpm > thresholds.safe_max || bpm < thresholds.safe_min) return 1; 
+  
   return 0; // Safe
 };
 
@@ -40,11 +36,18 @@ export const classifySymptomSeverity = (wheezeCount, coughs) => {
 };
 
 // Hybrid Fusion Logic (matching Python)
-export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5, spo2Baseline = null, breathingBaseline = null) => {
+export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5, spo2Baseline = null, breathingBaseline = null, motionStatus = 'STEADY') => {
   // 1. Classify raw sensor values
   const symptomRisk = classifySymptomSeverity(wheezeCount, coughCount);
   const spo2Risk = classifySpo2(spo2Value, spo2Baseline);
-  const breathingRisk = classifyBreathingRate(breathingRate, age, breathingBaseline);
+  
+  // 2. Breathing Logic with Motion Suppression
+  let breathingRisk = classifyBreathingRate(breathingRate, age);
+  
+  // If child is running, we ignore high breathing rate because it is physiological
+  if (motionStatus === 'RUNNING' && breathingRisk >= 1) {
+    breathingRisk = 0;
+  }
 
   const individualRisks = { symptom: symptomRisk, spo2: spo2Risk, breathing: breathingRisk };
   const symptomLog = { wheeze: wheezeCount, coughs: coughCount };

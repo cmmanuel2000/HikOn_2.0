@@ -643,7 +643,8 @@ const App = () => {
         breathingRate,
         patient?.age || 5,
         patient?.spo2Baseline,
-        patient?.breathingBaseline
+        patient?.breathingBaseline,
+        motion
       );
 
       // Run environmental fusion logic
