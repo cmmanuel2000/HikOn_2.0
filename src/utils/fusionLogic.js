@@ -17,16 +17,22 @@ export const classifySpo2 = (spo2Value, spo2Baseline = null) => {
   return 0; // Safe
 };
 
-export const classifyBreathingRate = (bpm, age = 5) => {
+export const classifyBreathingRate = (bpm, age = 5, breathingBaseline = null) => {
   const thresholds = age >= 6 ? BREATHING_THRESHOLDS_6_TO_12_YRS : BREATHING_THRESHOLDS_3_TO_7_YRS;
   
+  // Dynamic Range Matching:
+  // Use the standard limits (e.g. 18-30) but expand them if the baseline is outside.
+  const baselineValues = breathingBaseline ? parseFloat(breathingBaseline) : null;
+  const safeMin = baselineValues ? Math.min(thresholds.safe_min, baselineValues) : thresholds.safe_min;
+  const safeMax = baselineValues ? Math.max(thresholds.safe_max, baselineValues) : thresholds.safe_max;
+  
   // High risk (Very fast)
-  if (bpm > thresholds.medium_max) return 2; 
+  if (bpm > safeMax + 5) return 2; 
   
-  // Medium risk (Elevated or Slow)
-  if (bpm > thresholds.safe_max || bpm < thresholds.safe_min) return 1; 
+  // Medium risk (Outside the Dynamic Safe Zone)
+  if (bpm > safeMax || bpm < safeMin) return 1; 
   
-  return 0; // Safe
+  return 0; // Safe (Within standard or calibrated range)
 };
 
 export const classifySymptomSeverity = (wheezeCount, coughs) => {
