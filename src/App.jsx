@@ -617,7 +617,11 @@ const App = () => {
         }, 0);
 
         // ⏱️ Burst Detection: 60-Second Rolling Window
-        const recentEvents = events.filter(e => new Date(e.created_at).getTime() > oneMinuteAgo);
+        const recentEvents = events.filter(e => {
+          if (!e.created_at) return false;
+          const eventTime = new Date(e.created_at).getTime();
+          return !isNaN(eventTime) && eventTime > oneMinuteAgo;
+        });
         burstWheezeCount = recentEvents.reduce((sum, e) => {
           const isWheeze = e.wheeze === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('wheeze'));
           return sum + (isWheeze ? 1 : 0);
