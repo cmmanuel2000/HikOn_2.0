@@ -1,23 +1,16 @@
--- 🧪 SCENARIO 1: Personal Best Calibration (Smart Filter Test)
--- This version includes one intentional outlier (82.0) to test the 1.5 SD filter.
--- The final average should ignore the 82.0 and stay around 97.4%.
+-- 🧪 SCENARIO 1: Clinical Calibration (Simplified)
+-- This simulates clinical data coming from the device without a patient name.
+-- It includes SpO2 and the new Breathing Rate (br_rate) data.
 
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.4, 78, NOW() - INTERVAL '120 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.2, 79, NOW() - INTERVAL '110 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 96.8, 77, NOW() - INTERVAL '100 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.5, 78, NOW() - INTERVAL '90 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.1, 78, NOW() - INTERVAL '80 seconds');
-
--- 🛑 INTENTIONAL OUTLIER: This should be rejected by the 1.5 SD filter
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 82.0, 75, NOW() - INTERVAL '70 seconds');
-
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.3, 78, NOW() - INTERVAL '60 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 96.5, 77, NOW() - INTERVAL '50 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.0, 78, NOW() - INTERVAL '40 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 98.1, 79, NOW() - INTERVAL '30 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.4, 78, NOW() - INTERVAL '20 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.6, 78, NOW() - INTERVAL '10 seconds');
-INSERT INTO spo2_calibration (device_id, spo2, heart_rate, created_at) VALUES ('PATIENT-012', 97.5, 78, NOW());
-
--- Run this, then click "Record Personal Best". 
--- You should see "(1 outliers rejected)" in the final alert.
+INSERT INTO spo2_calibration (device_id, spo2, br_rate, heart_rate, created_at) VALUES
+('hikon_test_01', 98, 16, 72, NOW() - interval '110 seconds'),
+('hikon_test_01', 97, 17, 74, NOW() - interval '100 seconds'),
+('hikon_test_01', 98, 16, 71, NOW() - interval '90 seconds'),
+('hikon_test_01', 99, 16, 70, NOW() - interval '80 seconds'),
+('hikon_test_01', 98, 15, 72, NOW() - interval '70 seconds'),
+('hikon_test_01', 98, 16, 73, NOW() - interval '60 seconds'),
+('hikon_test_01', 97, 17, 75, NOW() - interval '50 seconds'),
+('hikon_test_01', 98, 18, 72, NOW() - interval '40 seconds'),
+('hikon_test_01', 98, 16, 70, NOW() - interval '20 seconds'),
+('hikon_test_01', 99, 17, 72, NOW() - interval '10 seconds'),
+('hikon_test_01', 98, 16, 73, NOW());
