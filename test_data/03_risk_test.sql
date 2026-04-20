@@ -53,16 +53,19 @@ VALUES ('DEMO-01', 98, 14);
 -----------------------------------------------------------------------
 
 -- SCENARIO 3A: Rapid Cough Burst (Frequency Test)
--- 8 coughs in 45 seconds
-INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at) VALUES 
-('DEMO-01', 97, 22, 1, NOW() - interval '45s'),
-('DEMO-01', 97, 22, 1, NOW() - interval '40s'),
-('DEMO-01', 97, 22, 1, NOW() - interval '35s'),
-('DEMO-01', 97, 22, 1, NOW() - interval '30s'),
-('DEMO-01', 97, 22, 1, NOW() - interval '25s'),
-('DEMO-01', 97, 22, 1, NOW() - interval '15s'),
-('DEMO-01', 97, 22, 1, NOW() - interval '10s'),
-('DEMO-01', 97, 22, 1, NOW());
+-- Clean stale data first to ensure clear results
+DELETE FROM s3_sensor_data;
+
+-- 8 coughs in 45 seconds with valid Heart Rate to prevent dashboard overrides
+INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, created_at) VALUES 
+('DEMO-01', 97, 75, 22, 1, NOW() - interval '45s'),
+('DEMO-01', 97, 75, 22, 1, NOW() - interval '40s'),
+('DEMO-01', 97, 75, 22, 1, NOW() - interval '35s'),
+('DEMO-01', 97, 75, 22, 1, NOW() - interval '30s'),
+('DEMO-01', 97, 75, 22, 1, NOW() - interval '25s'),
+('DEMO-01', 97, 75, 22, 1, NOW() - interval '15s'),
+('DEMO-01', 97, 75, 22, 1, NOW() - interval '10s'),
+('DEMO-01', 97, 75, 22, 1, NOW());
 
 -- SCENARIO 3B: Severe Tachypnea (Resting BR > 35)
 INSERT INTO s3_sensor_data (device_id, spo2, br_rate)
@@ -93,3 +96,14 @@ VALUES ('DEMO-01', 98, 31);
 -- Healthy child but unhealthy air quality.
 INSERT INTO s3_sensor_data (device_id, spo2, br_rate, pm25)
 VALUES ('DEMO-01', 99, 20, 56.4);
+
+
+-----------------------------------------------------------------------
+-- SECTION 6: THE SOS TEST (CRITICAL OVERRIDE)
+-----------------------------------------------------------------------
+
+-- SCENARIO 6A: Absolute Emergency (SOS Test)
+-- Forces 88% SpO2 and 45 BPM Respiratory Distress
+DELETE FROM s3_sensor_data;
+INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, wheeze, created_at)
+VALUES ('DEMO-SOS', 88, 120, 45, 10, 10, NOW());

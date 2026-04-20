@@ -11,19 +11,12 @@
  *             Uses a moving median filter to smooth out over/under-counting.
  */
 
-// Universal Calibration Offset: 0 (Disabled per user request)
-const SPO2_CHEST_OFFSET = 0;
-
 /**
- * Calibrate a raw chest SpO2 reading to match finger pulse oximeter values.
- * Returns null if input is invalid.
+ * Return raw SpO2 reading with no calibration offset.
  */
 export function calibrateSpO2(rawSpO2) {
   if (!rawSpO2 || rawSpO2 <= 0) return null;
-  
-  // Apply chest-to-finger offset, cap at 100%
-  const calibrated = Math.min(100, rawSpO2 + SPO2_CHEST_OFFSET);
-  return Math.round(calibrated * 10) / 10; // 1 decimal place
+  return rawSpO2; 
 }
 
 // --- Heart Rate Calibration (Moving Median Filter) ---
