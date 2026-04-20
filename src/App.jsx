@@ -388,36 +388,38 @@ const App = () => {
   useEffect(() => {
     if (!isCalibrating && calibrationTimer === 0) {
       if (calibrationSamples.length > 0) {
+        // --- 0. IMMEDIATE DISARM (Prevent loops) ---
+        setCalibrationTimer(-1);
+        const currentSamples = [...calibrationSamples];
+        const currentBrSamples = [...brSamples];
+        setCalibrationSamples([]);
+        setBrSamples([]);
+
         // --- 1. Process SpO2 Samples ---
-        const n_spo2 = calibrationSamples.length;
-        const mean_spo2 = calibrationSamples.reduce((a, b) => a + b, 0) / n_spo2;
-        const stdDev_spo2 = Math.sqrt(calibrationSamples.reduce((sum, val) => sum + Math.pow(val - mean_spo2, 2), 0) / n_spo2);
+        const n_spo2 = currentSamples.length;
+        const mean_spo2 = currentSamples.reduce((a, b) => a + b, 0) / n_spo2;
+        const stdDev_spo2 = Math.sqrt(currentSamples.reduce((sum, val) => sum + Math.pow(val - mean_spo2, 2), 0) / n_spo2);
         const cleanSpo2 = stdDev_spo2 === 0 
-          ? calibrationSamples 
-          : calibrationSamples.filter(s => Math.abs(s - mean_spo2) <= 1.5 * stdDev_spo2);
+          ? currentSamples 
+          : currentSamples.filter(s => Math.abs(s - mean_spo2) <= 1.5 * stdDev_spo2);
         const avgSpo2 = Math.round(cleanSpo2.reduce((a, b) => a + b, 0) / cleanSpo2.length);
 
         // --- 2. Process Breathing Rate Samples ---
         let avgBr = null;
-        if (brSamples.length > 0) {
-          const n_br = brSamples.length;
-          const mean_br = brSamples.reduce((a, b) => a + b, 0) / n_br;
-          const stdDev_br = Math.sqrt(brSamples.reduce((sum, val) => sum + Math.pow(val - mean_br, 2), 0) / n_br);
+        if (currentBrSamples.length > 0) {
+          const n_br = currentBrSamples.length;
+          const mean_br = currentBrSamples.reduce((a, b) => a + b, 0) / n_br;
+          const stdDev_br = Math.sqrt(currentBrSamples.reduce((sum, val) => sum + Math.pow(val - mean_br, 2), 0) / n_br);
           const cleanBr = stdDev_br === 0 
-            ? brSamples 
-            : brSamples.filter(s => Math.abs(s - mean_br) <= 1.5 * stdDev_br);
+            ? currentBrSamples 
+            : currentBrSamples.filter(s => Math.abs(s - mean_br) <= 1.5 * stdDev_br);
           avgBr = Math.round(cleanBr.reduce((a, b) => a + b, 0) / cleanBr.length);
         }
 
         const patient = patients.find(p => p.id === selectedPatientId);
-        setCalibrationTimer(-1); // Disarm
 
         if (patient) {
           updateClinicalBaselines(patient.patientId, avgSpo2, avgBr).then(success => {
-            // 🧹 Clear samples immediately to prevent infinite re-processing loops
-            setCalibrationSamples([]);
-            setBrSamples([]);
-            
             if (success) {
               const msg = `Calibration Complete! Personal Best SpO2 set to ${avgSpo2}% and Resting BR set to ${avgBr || 'N/A'} bpm.`;
               setAlertMsg(msg);
