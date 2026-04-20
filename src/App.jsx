@@ -250,7 +250,8 @@ const App = () => {
     savePatient,
     deletePatient,
     updateActivePatientInSupabase,
-    updateSpo2Baseline
+    updateSpo2Baseline,
+    updateClinicalBaselines
   } = patientManagement;
 
   // Bronchodilator Reversibility State
