@@ -21,18 +21,21 @@ export const classifyBreathingRate = (bpm, age = 5, breathingBaseline = null) =>
   const thresholds = age >= 6 ? BREATHING_THRESHOLDS_6_TO_12_YRS : BREATHING_THRESHOLDS_3_TO_7_YRS;
   
   // Dynamic Range Matching:
-  // Use the standard limits (e.g. 18-30) but expand them if the baseline is outside.
-  const baselineValues = breathingBaseline ? parseFloat(breathingBaseline) : null;
-  const safeMin = baselineValues ? Math.min(thresholds.safe_min, baselineValues) : thresholds.safe_min;
-  const safeMax = baselineValues ? Math.max(thresholds.safe_max, baselineValues) : thresholds.safe_max;
+  // We strictly follow the image (Safe <= 22, High > 30) but allow the baseline to expand the "normal"
+  const baseline = breathingBaseline ? parseFloat(breathingBaseline) : null;
+  const safeMin = baseline ? Math.min(thresholds.safe_min, baseline) : thresholds.safe_min;
+  const safeMax = baseline ? Math.max(thresholds.safe_max, baseline) : thresholds.safe_max;
   
-  // High risk (Very fast)
-  if (bpm > safeMax + 5) return 2; 
+  // High risk threshold follows the baseline if it exceeds the standard (30)
+  const highTrigger = baseline ? Math.max(thresholds.medium_max, baseline) : thresholds.medium_max;
   
-  // Medium risk (Outside the Dynamic Safe Zone)
+  // Risk 2 (High): > 30 (or > baseline if baseline is higher)
+  if (bpm > highTrigger) return 2; 
+  
+  // Risk 1 (Medium): Outside Safe Zone
   if (bpm > safeMax || bpm < safeMin) return 1; 
   
-  return 0; // Safe (Within standard or calibrated range)
+  return 0; // Risk 0 (Safe)
 };
 
 export const classifySymptomSeverity = (wheezeCount, coughs) => {
@@ -48,7 +51,7 @@ export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, 
   const spo2Risk = classifySpo2(spo2Value, spo2Baseline);
   
   // 2. Breathing Logic with Motion Suppression
-  let breathingRisk = classifyBreathingRate(breathingRate, age);
+  let breathingRisk = classifyBreathingRate(breathingRate, age, breathingBaseline);
   
   // If child is running, we ignore high breathing rate because it is physiological
   if (motionStatus === 'RUNNING' && breathingRisk >= 1) {

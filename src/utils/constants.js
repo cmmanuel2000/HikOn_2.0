@@ -27,8 +27,8 @@ export const BREATHING_THRESHOLDS_3_TO_7_YRS = {
 
 export const BREATHING_THRESHOLDS_6_TO_12_YRS = {
   safe_min: 18,
-  safe_max: 30,
-  medium_max: 35, // High risk above 35
+  safe_max: 30, // Updated: 18-30 is Safe
+  medium_max: 35, // High risk starts above 35
 };
 
 // Environmental Sensor Weights
