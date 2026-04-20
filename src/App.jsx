@@ -414,6 +414,10 @@ const App = () => {
 
         if (patient) {
           updateClinicalBaselines(patient.patientId, avgSpo2, avgBr).then(success => {
+            // 🧹 Clear samples immediately to prevent infinite re-processing loops
+            setCalibrationSamples([]);
+            setBrSamples([]);
+            
             if (success) {
               const msg = `Calibration Complete! Personal Best SpO2 set to ${avgSpo2}% and Resting BR set to ${avgBr || 'N/A'} bpm.`;
               setAlertMsg(msg);
