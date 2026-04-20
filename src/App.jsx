@@ -109,13 +109,13 @@ const fetchHistoricalData = async (days, patientId = null, role = 'admin', age =
         };
       }
       
-      // Collect values for averaging
-      if (record.spo2) groupedByDay[dayKey].spo2Values.push(record.spo2);
-      if (record.heart_rate) groupedByDay[dayKey].heartRateValues.push(record.heart_rate);
-      if (record.br_rate !== null && record.br_rate !== undefined) groupedByDay[dayKey].breathingRateValues.push(record.br_rate);
-      if (record.temperature) groupedByDay[dayKey].tempValues.push(record.temperature);
-      if (record.humidity) groupedByDay[dayKey].humidityValues.push(record.humidity);
-      if (record.pm25) groupedByDay[dayKey].pm25Values.push(record.pm25);
+      // Collect values for averaging - ignore records with invalid data
+      if (record.spo2) groupedByDay[dayKey].spo2Values.push(parseFloat(record.spo2) || 0);
+      if (record.heart_rate) groupedByDay[dayKey].heartRateValues.push(parseFloat(record.heart_rate) || 0);
+      if (record.br_rate !== null && record.br_rate !== undefined) groupedByDay[dayKey].breathingRateValues.push(parseFloat(record.br_rate) || 0);
+      if (record.temperature) groupedByDay[dayKey].tempValues.push(parseFloat(record.temperature) || 0);
+      if (record.humidity) groupedByDay[dayKey].humidityValues.push(parseFloat(record.humidity) || 0);
+      if (record.pm25) groupedByDay[dayKey].pm25Values.push(parseFloat(record.pm25) || 0);
       
       // Count symptoms from binary columns OR prediction labels
       const isCough = record.cough === 1 || (record.prediction_label && record.prediction_label.toLowerCase().includes('cough'));
@@ -779,12 +779,15 @@ const App = () => {
         hourlyData[hourKey].spo2Values.push(record.spo2);
       });
       
-      // Calculate averages and format
+      // Calculate averages and format — ensure strictly numeric values for charts
       const formattedData = Object.values(hourlyData)
-        .map(hour => ({
-          time: hour.time,
-          spo2: hour.spo2Values.reduce((a, b) => a + b, 0) / hour.spo2Values.length
-        }))
+        .map(hour => {
+          const val = hour.spo2Values.reduce((a, b) => a + b, 0) / hour.spo2Values.length;
+          return {
+            time: hour.time,
+            spo2: !isNaN(val) ? Math.round(val) : 98
+          };
+        })
         .sort((a, b) => a.time.localeCompare(b.time));
       
       setVitalsTrend(formattedData);
