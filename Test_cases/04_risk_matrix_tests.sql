@@ -8,11 +8,10 @@
 -----------------------------------------------------------------------
 -- SP02: 99.0% (Safe)
 -- BR: 19 BPM (Safe)
--- Symptoms: 0
 -- EXPECTED RESULT: 🟢 SAFE
--- REASONING: "Weighted score... results in SAFE risk."
-INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, wheeze, created_at)
-VALUES ('DEMO-01', 99, 19, 0, 0, NOW());
+DELETE FROM s3_sensor_data;
+INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, wheeze, created_at)
+VALUES ('DEMO-01', 99.0, 72, 19, 0, 0, NOW());
 
 
 -----------------------------------------------------------------------
@@ -21,30 +20,29 @@ VALUES ('DEMO-01', 99, 19, 0, 0, NOW());
 -- SP02: 97.0% (Borderline)
 -- Symptoms: 2 Coughs (Moderate frequency)
 -- EXPECTED RESULT: 🟡 MEDIUM RISK
--- REASONING: "Weighted score... results in MEDIUM risk."
--- TRIGGER: "Mild Respiratory Symptoms", "Low SpO2"
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, wheeze, created_at)
 VALUES 
-('DEMO-01', 97, 24, 1, NOW() - interval '30s'),
-('DEMO-01', 97, 24, 1, NOW());
+('DEMO-01', 97.0, 80, 24, 1, 0, NOW() - interval '30s'),
+('DEMO-01', 97.0, 80, 24, 1, 0, NOW());
 
 
 -----------------------------------------------------------------------
 -- SCENARIO C: 🔴 HIGH RISK (MULTIPLE TRIGGERS)
 -----------------------------------------------------------------------
--- SP02: 96.0% (Low)
--- BR: 32 BPM (Rapid)
--- Symptoms: 4 Coughs
+-- SP02: 95.0% (Trigger for HIGH risk)
+-- BR: 36 BPM (Trigger for HIGH risk)
+-- Symptoms: 6 Coughs (5s intervals to ensure burst detection)
 -- EXPECTED RESULT: 🔴 HIGH RISK
--- NOTE: Even though SpO2 > 95, the COMBINATION of Low SpO2 + High BR + Coughing creates a 3.0 High Risk.
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, wheeze, created_at)
 VALUES 
-('DEMO-01', 96, 32, 1, NOW() - interval '45s'),
-('DEMO-01', 96, 32, 1, NOW() - interval '30s'),
-('DEMO-01', 96, 32, 1, NOW() - interval '15s'),
-('DEMO-01', 96, 32, 1, NOW());
+('DEMO-01', 95.0, 85, 36, 1, 0, NOW() - interval '25s'),
+('DEMO-01', 95.0, 85, 36, 1, 0, NOW() - interval '20s'),
+('DEMO-01', 95.0, 85, 36, 1, 0, NOW() - interval '15s'),
+('DEMO-01', 95.0, 85, 36, 1, 0, NOW() - interval '10s'),
+('DEMO-01', 95.0, 85, 36, 1, 0, NOW() - interval '5s'),
+('DEMO-01', 95.0, 85, 36, 1, 0, NOW());
 
 
 -----------------------------------------------------------------------
@@ -54,8 +52,8 @@ VALUES
 -- EXPECTED RESULT: 🔴 HIGH RISK
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
-VALUES ('DEMO-01', 95, 18, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, wheeze, created_at)
+VALUES ('DEMO-01', 95.0, 90, 18, 0, NOW());
 
 
 -----------------------------------------------------------------------
@@ -63,15 +61,12 @@ VALUES ('DEMO-01', 95, 18, NOW());
 -----------------------------------------------------------------------
 -- COUGHS: 6 coughs within 60 seconds
 -- EXPECTED RESULT: 🔴 HIGH RISK
--- REASONING: "Weighted score... results in HIGH risk."
--- TRIGGER: "Severe Respiratory Symptoms"
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, wheeze, created_at)
 VALUES 
-('DEMO-01', 98, 20, 1, NOW() - interval '50s'),
-('DEMO-01', 98, 20, 1, NOW() - interval '40s'),
-('DEMO-01', 98, 20, 1, NOW() - interval '30s'),
-('DEMO-01', 98, 20, 1, NOW() - interval '20s'),
-('DEMO-01', 98, 20, 1, NOW() - interval '10s'),
-('DEMO-01', 98, 20, 1, NOW());
-
+('DEMO-01', 98.0, 75, 20, 1, 0, NOW() - interval '50s'),
+('DEMO-01', 98.0, 75, 20, 1, 0, NOW() - interval '40s'),
+('DEMO-01', 98.0, 75, 20, 1, 0, NOW() - interval '30s'),
+('DEMO-01', 98.0, 75, 20, 1, 0, NOW() - interval '20s'),
+('DEMO-01', 98.0, 75, 20, 1, 0, NOW() - interval '10s'),
+('DEMO-01', 98.0, 75, 20, 1, 0, NOW());
