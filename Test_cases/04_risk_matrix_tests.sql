@@ -56,3 +56,22 @@ VALUES
 DELETE FROM s3_sensor_data;
 INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
 VALUES ('DEMO-01', 95, 18, NOW());
+
+
+-----------------------------------------------------------------------
+-- SCENARIO E: 🔴 HIGH RISK (COUGH BURST)
+-----------------------------------------------------------------------
+-- COUGHS: 6 coughs within 60 seconds
+-- EXPECTED RESULT: 🔴 HIGH RISK
+-- REASONING: "Weighted score... results in HIGH risk."
+-- TRIGGER: "Severe Respiratory Symptoms"
+DELETE FROM s3_sensor_data;
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at)
+VALUES 
+('DEMO-01', 98, 20, 1, NOW() - interval '50s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '40s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '30s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '20s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '10s'),
+('DEMO-01', 98, 20, 1, NOW());
+
