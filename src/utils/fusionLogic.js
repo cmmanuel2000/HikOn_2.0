@@ -9,7 +9,9 @@ import {
 
 // Classification functions for physiological sensors
 export const classifySpo2 = (spo2Value, spo2Baseline = null) => {
-  // Personal Best Override: If at or above personal best, it is considered SAFE for this child
+  // 🛡️ Personal Best Baseline Check
+  // If the current reading is at or above their calibrated "Personal Best", 
+  // we treat it as SAFE (0), regardless of standard clinical thresholds.
   if (spo2Baseline && spo2Value >= spo2Baseline) return 0;
   
   if (spo2Value <= SPO2_THRESHOLDS.high_max) return 2; // High risk (<= 95%)
@@ -128,15 +130,24 @@ export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, 
   const stdDev = Math.sqrt(variance);
   const confidence = Math.max(0.5, 1.0 - (stdDev * 0.4));
 
+  // 7. Human-Readable Reasoning
+  let reasoning = `Weighted score of ${riskScore.toFixed(2)} results in ${finalRisk} risk.`;
+  
+  if (finalRisk === 'SAFE' && spo2Value <= SPO2_THRESHOLDS.high_max && spo2Baseline) {
+    reasoning = `SAFE: SpO2 (${spo2Value}%) is at or above the child's Personal Best baseline (${spo2Baseline}%).`;
+  } else if (finalRisk === 'SAFE' && isPhysicalActivity) {
+    reasoning = 'SAFE: High vitals detected, but optimal SpO2 and motion indicate physical activity.';
+  }
+
   return {
     finalRisk,
     riskScore: Math.round(riskScore * 100) / 100,
     confidence: Math.round(confidence * 100) / 100,
-    reasoning: `Weighted score of ${riskScore.toFixed(2)} results in ${finalRisk} risk.`,
+    reasoning,
     individualRisks,
     symptomLog,
-    spo2WasCritical: false,
-    isPhysicalActivity: false,
+    spo2WasCritical: finalRisk === 'HIGH' && spo2Value <= SPO2_THRESHOLDS.high_max,
+    isPhysicalActivity,
     triggers
   };
 };

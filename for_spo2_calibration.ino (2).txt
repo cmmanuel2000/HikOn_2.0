@@ -1,0 +1,292 @@
+/* ================================================================
+   HikOn SpO2 Calibration Sketch
+   Board  : XIAO ESP32-S3
+   Sensor : MAX30102 (purple breakout)
+
+   Uploads one row per 100-sample window to TWO Supabase tables:
+     1. oximeter_calibration  — schema v2.1.1 + supabase_changes.txt
+     2. spo2_calibration      — schema supabase_changes.txt
+
+Doesn't upload r_ratio
+   ================================================================ */
+
+#include <Wire.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
+#include "MAX30105.h"
+
+/* =============== Credentials =============== */
+const char* WIFI_SSID = "ZTE_2.4G_9RsHEG";
+const char* WIFI_PASSWORD = "yGH64KcS";
+const char* SUPABASE_URL  = "https://ogapdrgcwmzecbwwrmre.supabase.co";
+const char* SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nYXBkcmdjd216ZWNid3dybXJlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODM0MjE3MCwiZXhwIjoyMDczOTE4MTcwfQ.7L9zpymxD0nGE6pqk_d6Zs_GqrcBJwNUekUFBdYHLlo";
+
+/* =============== Pin Definitions (XIAO ESP32-S3) ===============
+   MAX30102 SDA → D4 (GPIO5)
+   MAX30102 SCL → D5 (GPIO6)                                      */
+#define SDA_PIN 5
+#define SCL_PIN 6
+
+/* =============== Sensor & Buffers =============== */
+MAX30105 particleSensor;
+
+const int sampleWindow = 100;
+uint32_t redBuffer[sampleWindow];
+uint32_t irBuffer[sampleWindow];
+int bufferIndex = 0;
+
+/* =============== Helpers =============== */
+void calculateACDC(uint32_t* buffer, int size, float* ac, float* dc) {
+    uint32_t minV = 0xFFFFFFFF, maxV = 0;
+    float sum = 0;
+    for (int i = 0; i < size; i++) {
+        if (buffer[i] < minV) minV = buffer[i];
+        if (buffer[i] > maxV) maxV = buffer[i];
+        sum += buffer[i];
+    }
+    *ac = maxV - minV;
+    *dc = sum / size;
+}
+
+/* ----------------------------------------------------------------
+   uploadOximeterCalibration()
+   Table: oximeter_calibration
+   Schema: database_schema.md (v2.1.1) + supabase_changes.txt
+
+   Columns sent:
+     device_id    TEXT
+     sample_count INTEGER
+     samples      JSONB   ← high-frequency IR/RED/R array (v2.1.1)
+     br_rate      NUMERIC ← flat column added by supabase_changes.txt
+     patient_id   TEXT    ← flat column added by supabase_changes.txt
+   ---------------------------------------------------------------- */
+void uploadOximeterCalibration(float R, uint32_t ir, uint32_t red,
+                               float br_rate   = -1.0f,
+                               const char* patient_id = nullptr) {
+    if (WiFi.status() != WL_CONNECTED) return;
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setTimeout(10000);
+    HTTPClient http;
+    http.setConnectTimeout(10000);
+    http.setTimeout(10000);
+
+    http.begin(client, String(SUPABASE_URL) + "/rest/v1/oximeter_calibration");
+    http.addHeader("apikey",         SUPABASE_KEY);
+    http.addHeader("Authorization",  "Bearer " + String(SUPABASE_KEY));
+    http.addHeader("Content-Type",   "application/json");
+    http.addHeader("Prefer",         "return=representation");
+
+    DynamicJsonDocument doc(1024);
+
+    // --- Flat columns (v2.1.1 base schema) ---
+    doc["device_id"]    = "hikon_s3_v1_oximeter";
+    doc["sample_count"] = sampleWindow;
+
+    // --- JSONB samples blob (v2.1.1: column `samples JSONB`) ---
+    JsonArray samplesArr = doc.createNestedArray("samples");
+    JsonObject s = samplesArr.createNestedObject();
+    s["ir_value"]     = ir;
+    s["red_value"]    = red;
+    s["r_ratio"]      = R;
+    s["timestamp_ms"] = (uint32_t)millis();
+
+    // --- Flat columns added by supabase_changes.txt ---
+    if (br_rate > 0.0f)                       doc["br_rate"]    = br_rate;
+    if (patient_id && strlen(patient_id) > 0) doc["patient_id"] = patient_id;
+
+    String payload;
+    serializeJson(doc, payload);
+
+    int code = http.POST(payload);
+    if (code == 200 || code == 201) {
+        Serial.printf("[Oxi-Cal] Uploaded OK (HTTP %d)\n", code);
+    } else {
+        Serial.printf("[Oxi-Cal] Failed (HTTP %d)\n", code);
+        if (code > 0) Serial.println(http.getString());
+    }
+    http.end();
+    client.stop();
+}
+
+/* ----------------------------------------------------------------
+   uploadSpo2Calibration()
+   Table: spo2_calibration
+   Schema: supabase_changes.txt
+
+   Columns sent:
+     device_id    TEXT
+     r_ratio      NUMERIC  ← raw Ratio-of-Ratios value for trendline
+     ir_value     NUMERIC
+     red_value    NUMERIC
+     br_rate      NUMERIC  ← added by supabase_changes.txt
+     patient_id   TEXT     ← added by supabase_changes.txt
+   ---------------------------------------------------------------- */
+void uploadSpo2Calibration(float spo2, float br_rate = -1.0f, const char* patient_id = nullptr) {
+    if (WiFi.status() != WL_CONNECTED) return;
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setTimeout(10000);
+    HTTPClient http;
+    http.setConnectTimeout(10000);
+    http.setTimeout(10000);
+
+    http.begin(client, String(SUPABASE_URL) + "/rest/v1/spo2_calibration");
+    http.addHeader("apikey",        SUPABASE_KEY);
+    http.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+    http.addHeader("Content-Type",  "application/json");
+    http.addHeader("Prefer",        "return=representation");
+
+    DynamicJsonDocument doc(512);
+    doc["device_id"] = "hikon_s3_v1_oximeter";
+    doc["spo2"]      = spo2;    // <--- READY FOR YOUR CALIBRATED DATA
+    doc["br_rate"]   = (br_rate > 0.0f) ? br_rate : (float)0;
+    
+    if (patient_id && strlen(patient_id) > 0) doc["patient_id"] = patient_id;
+
+    String payload;
+    serializeJson(doc, payload);
+
+    int code = http.POST(payload);
+    if (code == 200 || code == 201) {
+        Serial.printf("[SpO2-Cal] Uploaded OK (HTTP %d)\n", code);
+    } else {
+        Serial.printf("[SpO2-Cal] Failed (HTTP %d)\n", code);
+        if (code > 0) Serial.println(http.getString());
+    }
+    http.end();
+    client.stop();
+}
+
+/* =============== Setup =============== */
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+
+    // --- I2C + MAX30102 FIRST (before WiFi — WiFi init can disturb I2C bus timing) ---
+    Wire.begin(SDA_PIN, SCL_PIN);
+    delay(50);               // Let bus settle after begin()
+    Wire.setClock(400000);
+    delay(20);
+
+    // Step 1: retry I2C scan up to 5 times — bus may need a moment after power-on
+    bool i2cFound = false;
+    for (int attempt = 1; attempt <= 5; attempt++) {
+        Wire.beginTransmission(0x57);
+        if (Wire.endTransmission() == 0) {
+            i2cFound = true;
+            break;
+        }
+        Serial.printf("[MAX30102] I2C scan attempt %d/5 failed, retrying...\n", attempt);
+        delay(200);
+    }
+    if (!i2cFound) {
+        Serial.println("[MAX30102] Not found at 0x57! Check SDA→D4 and SCL→D5.");
+        while (1);
+    }
+    Serial.println("[MAX30102] Found at 0x57.");
+
+    // Step 2: retry begin() up to 3 times (matches main firmware)
+    bool initialized = false;
+    for (int attempt = 1; attempt <= 3; attempt++) {
+        if (particleSensor.begin(Wire, I2C_SPEED_FAST)) {
+            initialized = true;
+            break;
+        }
+        Serial.printf("[MAX30102] begin() failed (attempt %d/3)\n", attempt);
+        delay(150);
+    }
+    if (!initialized) {
+        Serial.println("[MAX30102] Failed to initialize after 3 attempts.");
+        while (1);
+    }
+
+    // Step 3: exact setup params + pulse amplitudes from main firmware
+    particleSensor.setup(0x1F, 4, 2, 400, 411, 4096);
+    particleSensor.setPulseAmplitudeRed(0x14);
+    particleSensor.setPulseAmplitudeIR(0x14);
+
+    // Step 4: warm-up flush (12 samples) — same as main firmware
+    for (int i = 0; i < 12; i++) {
+        particleSensor.check();
+        if (particleSensor.available()) particleSensor.nextSample();
+        delay(20);
+    }
+    Serial.println("[MAX30102] Sensor initialized.");
+
+    // --- WiFi (after sensor is confirmed stable) ---
+    Serial.print("[WiFi] Connecting to ");
+    Serial.print(WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    unsigned long wifiStart = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 20000UL) {
+        delay(500);
+        Serial.print('.');
+    }
+    Serial.println();
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("[WiFi] Connected: " + WiFi.localIP().toString());
+    } else {
+        Serial.println("[WiFi] Not connected — uploads will be skipped.");
+    }
+
+    Serial.println("[HikOn] Calibration ready. Place sensor on sternum.");
+    Serial.println("[HikOn] Waiting for skin contact (IR > 50000)...");
+}
+
+/* =============== Loop =============== */
+void loop() {
+    uint32_t ir  = particleSensor.getIR();
+    uint32_t red = particleSensor.getRed();
+
+    // Wait for valid skin contact
+    if (ir < 50000) {
+        Serial.println("No contact detected. Adjust sensor placement.");
+        delay(500);
+        return;
+    }
+
+    redBuffer[bufferIndex] = red;
+    irBuffer[bufferIndex]  = ir;
+    bufferIndex++;
+
+    if (bufferIndex >= sampleWindow) {
+        float redAC, redDC, irAC, irDC;
+        calculateACDC(redBuffer, sampleWindow, &redAC, &redDC);
+        calculateACDC(irBuffer,  sampleWindow, &irAC,  &irDC);
+
+        // Guard against division by zero
+        if (irAC == 0 || irDC == 0) {
+            Serial.println("[Cal] Invalid IR signal. Recheck placement.");
+            bufferIndex = 0;
+            return;
+        }
+
+        float R = (redAC / redDC) / (irAC / irDC);
+
+        // 🩺 CALCULATION WITH OFFSET
+        // raw_spo2 = 110 - (25 * R)
+        // Set this to 0.0f for now; change it once you find your manual offset!
+        float current_offset = 0.0f; 
+        float spo2 = (110.0f - 25.0f * R) + current_offset;
+
+        // Clamp to logical limits
+        if (spo2 > 100.0f) spo2 = 100.0f;
+
+        Serial.print("[Cal] RAW_R: ");
+        Serial.print(R, 4);
+        Serial.print(" | CALIBRATED_SPO2: ");
+        Serial.print(spo2, 2);
+        Serial.println(" %");
+
+        // --- Upload to both tables ---
+        uploadOximeterCalibration(R, ir, red); 
+        uploadSpo2Calibration(spo2);           // <--- SENDS THE VALUE TO THE DASHBOARD
+
+        bufferIndex = 0;
+    }
+}
