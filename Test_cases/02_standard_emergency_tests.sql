@@ -14,8 +14,8 @@ WHERE patient_id = 'PATIENT-001';
 -- EXPECTED RESULT: 🔴 HIGH RISK (Red)
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 95, 75, 18, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
+VALUES ('DEMO-01', 95, 18, NOW());
 
 
 -----------------------------------------------------------------------
@@ -24,8 +24,8 @@ VALUES ('DEMO-DEVICE', 'PATIENT-001', 95, 75, 18, NOW());
 -- EXPECTED RESULT: 🔴 HIGH RISK (Red)
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 93, 85, 20, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
+VALUES ('DEMO-01', 93, 20, NOW());
 
 
 -----------------------------------------------------------------------
@@ -34,8 +34,8 @@ VALUES ('DEMO-DEVICE', 'PATIENT-001', 93, 85, 20, NOW());
 -- EXPECTED RESULT: 🔴 HIGH RISK (Red)
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 88, 110, 22, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
+VALUES ('DEMO-01', 88, 22, NOW());
 
 
 -----------------------------------------------------------------------
@@ -45,8 +45,8 @@ VALUES ('DEMO-DEVICE', 'PATIENT-001', 88, 110, 22, NOW());
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 -- NOTE: The oxygen override fires before it even calculates the wheeze risk.
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, wheeze, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 95, 75, 32, 1, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, wheeze, created_at)
+VALUES ('DEMO-01', 95, 32, 1, NOW());
 
 
 -----------------------------------------------------------------------
@@ -55,8 +55,8 @@ VALUES ('DEMO-DEVICE', 'PATIENT-001', 95, 75, 32, 1, NOW());
 -- EXPECTED RESULT: 🔴 HIGH RISK (Red)
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, cough, wheeze, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, wheeze, created_at)
 VALUES 
-('DEMO-DEVICE', 'PATIENT-001', 94, 120, 35, 1, 1, NOW() - interval '10s'),
-('DEMO-DEVICE', 'PATIENT-001', 94, 120, 35, 1, 1, NOW() - interval '5s'),
-('DEMO-DEVICE', 'PATIENT-001', 94, 120, 35, 1, 1, NOW());
+('DEMO-01', 94, 35, 1, 1, NOW() - interval '10s'),
+('DEMO-01', 94, 35, 1, 1, NOW() - interval '5s'),
+('DEMO-01', 94, 35, 1, 1, NOW());

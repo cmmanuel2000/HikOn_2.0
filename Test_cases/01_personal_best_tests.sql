@@ -15,8 +15,8 @@ WHERE patient_id = 'PATIENT-001';
 -- EXPECTED RESULT: 🟢 SAFE (Green)
 -- REASONING: "SAFE: SpO2 (95%) is at or above the child's Personal Best baseline (94%)."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 95, 75, 20, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
+VALUES ('DEMO-01', 95, 20, NOW());
 
 
 -----------------------------------------------------------------------
@@ -25,8 +25,8 @@ VALUES ('DEMO-DEVICE', 'PATIENT-001', 95, 75, 20, NOW());
 -- EXPECTED RESULT: 🟢 SAFE (Green)
 -- REASONING: "SAFE: SpO2 (94%) is at or above the child's Personal Best baseline (94%)."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 94, 75, 20, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
+VALUES ('DEMO-01', 94, 20, NOW());
 
 
 -----------------------------------------------------------------------
@@ -36,8 +36,8 @@ VALUES ('DEMO-DEVICE', 'PATIENT-001', 94, 75, 20, NOW());
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 -- NOTE: Since 93% is BELOW the 94% baseline, the safety protocol fires.
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 93, 75, 20, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
+VALUES ('DEMO-01', 93, 20, NOW());
 
 
 -----------------------------------------------------------------------

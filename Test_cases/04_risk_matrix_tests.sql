@@ -11,9 +11,8 @@
 -- Symptoms: 0
 -- EXPECTED RESULT: 🟢 SAFE
 -- REASONING: "Weighted score... results in SAFE risk."
-DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, wheeze, created_at)
-VALUES ('DEMO-DEVICE', 99, 72, 19, 0, 0, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, wheeze, created_at)
+VALUES ('DEMO-01', 99, 19, 0, 0, NOW());
 
 
 -----------------------------------------------------------------------
@@ -25,10 +24,10 @@ VALUES ('DEMO-DEVICE', 99, 72, 19, 0, 0, NOW());
 -- REASONING: "Weighted score... results in MEDIUM risk."
 -- TRIGGER: "Mild Respiratory Symptoms", "Low SpO2"
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at)
 VALUES 
-('DEMO-DEVICE', 97, 80, 24, 1, NOW() - interval '30s'),
-('DEMO-DEVICE', 97, 80, 24, 1, NOW());
+('DEMO-01', 97, 24, 1, NOW() - interval '30s'),
+('DEMO-01', 97, 24, 1, NOW());
 
 
 -----------------------------------------------------------------------
@@ -40,12 +39,12 @@ VALUES
 -- EXPECTED RESULT: 🔴 HIGH RISK
 -- NOTE: Even though SpO2 > 95, the COMBINATION of Low SpO2 + High BR + Coughing creates a 3.0 High Risk.
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, cough, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at)
 VALUES 
-('DEMO-DEVICE', 96, 95, 32, 1, NOW() - interval '45s'),
-('DEMO-DEVICE', 96, 95, 32, 1, NOW() - interval '30s'),
-('DEMO-DEVICE', 96, 95, 32, 1, NOW() - interval '15s'),
-('DEMO-DEVICE', 96, 95, 32, 1, NOW());
+('DEMO-01', 96, 32, 1, NOW() - interval '45s'),
+('DEMO-01', 96, 32, 1, NOW() - interval '30s'),
+('DEMO-01', 96, 32, 1, NOW() - interval '15s'),
+('DEMO-01', 96, 32, 1, NOW());
 
 
 -----------------------------------------------------------------------
@@ -55,5 +54,5 @@ VALUES
 -- EXPECTED RESULT: 🔴 HIGH RISK
 -- REASONING: "CRITICAL OVERRIDE: SpO2 at or below 95% triggered safety protocol."
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, spo2, heart_rate, br_rate, created_at)
-VALUES ('DEMO-DEVICE', 95, 75, 18, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, created_at)
+VALUES ('DEMO-01', 95, 18, NOW());

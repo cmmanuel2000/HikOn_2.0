@@ -54,6 +54,8 @@ export const classifySymptomSeverity = (burstCoughs, burstWheezes) => {
 
 // Hybrid Fusion Logic (matching Python)
 export const hybridFusion = (wheezeCount, coughCount, spo2Value, breathingRate, age = 5, spo2Baseline = null, breathingBaseline = null, motionStatus = 'STEADY') => {
+  let isPhysicalActivity = false;
+  
   // 1. Classify raw sensor values
   const symptomRisk = classifySymptomSeverity(wheezeCount, coughCount);
   const spo2Risk = classifySpo2(spo2Value, spo2Baseline);

@@ -10,14 +10,14 @@
 -- REASONING: "Weighted score... results in HIGH risk."
 -- TRIGGER: "Severe Respiratory Symptoms"
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, cough, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, cough, created_at)
 VALUES 
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW() - interval '50s'),
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW() - interval '40s'),
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW() - interval '30s'),
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW() - interval '20s'),
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW() - interval '10s'),
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW());
+('DEMO-01', 98, 20, 1, NOW() - interval '50s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '40s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '30s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '20s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '10s'),
+('DEMO-01', 98, 20, 1, NOW());
 
 
 -----------------------------------------------------------------------
@@ -27,11 +27,11 @@ VALUES
 -- REASONING: "Weighted score... results in MEDIUM risk."
 -- TRIGGER: "Mild Respiratory Symptoms"
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, wheeze, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, wheeze, created_at)
 VALUES 
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW() - interval '30s'),
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW() - interval '15s'),
-('DEMO-DEVICE', 'PATIENT-001', 98, 75, 20, 1, NOW());
+('DEMO-01', 98, 20, 1, NOW() - interval '30s'),
+('DEMO-01', 98, 20, 1, NOW() - interval '15s'),
+('DEMO-01', 98, 20, 1, NOW());
 
 
 -----------------------------------------------------------------------
@@ -41,8 +41,8 @@ VALUES
 -- REASONING: "SAFE: High vitals detected, but optimal SpO2 and motion indicate physical activity."
 -- NOTE: Child has high BR (35) but perfect SpO2 (99%) and is RUNNING.
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, accel_mag, created_at)
-VALUES ('DEMO-DEVICE', 'PATIENT-001', 99, 110, 35, 1.4, NOW());
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, accel_mag, created_at)
+VALUES ('DEMO-01', 99, 35, 1.4, NOW());
 
 
 -----------------------------------------------------------------------
@@ -52,8 +52,8 @@ VALUES ('DEMO-DEVICE', 'PATIENT-001', 99, 110, 35, 1.4, NOW());
 -- REASONING: "Weighted score... results in HIGH risk."
 -- TRIGGERS: "Low SpO2", "Severe Respiratory Symptoms", "Rapid Breathing Rate"
 DELETE FROM s3_sensor_data;
-INSERT INTO s3_sensor_data (device_id, patient_id, spo2, heart_rate, br_rate, wheeze, cough, created_at)
+INSERT INTO s3_sensor_data (device_id, spo2, br_rate, wheeze, cough, created_at)
 VALUES 
-('DEMO-DEVICE', 'PATIENT-001', 96, 115, 34, 1, 1, NOW() - interval '20s'),
-('DEMO-DEVICE', 'PATIENT-001', 96, 115, 34, 1, 1, NOW() - interval '10s'),
-('DEMO-DEVICE', 'PATIENT-001', 96, 115, 34, 1, 1, NOW());
+('DEMO-01', 96, 34, 1, 1, NOW() - interval '20s'),
+('DEMO-01', 96, 34, 1, 1, NOW() - interval '10s'),
+('DEMO-01', 96, 34, 1, 1, NOW());
