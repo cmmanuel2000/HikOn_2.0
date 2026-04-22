@@ -1208,9 +1208,8 @@ const App = () => {
                 </div>
                 <div className="flex flex-col items-end">
                   <RiskBadge 
-                    level={alertsEnabled ? sensors.physioRisk : 'safe'} 
+                    level={sensors.physioRisk} 
                     theme={theme} 
-                    label={!alertsEnabled ? (motionStatus === 'RUNNING' ? 'MOTION' : 'STABILIZING') : null}
                   />
                   <div className={`mt-2 text-[10px] font-black uppercase tracking-widest flex items-center justify-between ${
                     motionStatus === 'STEADY' ? 'text-emerald-500' : 
