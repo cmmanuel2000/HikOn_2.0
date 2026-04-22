@@ -538,12 +538,14 @@ const App = () => {
       if (eventsRes.ok) {
         const events = await eventsRes.json();
         wheezeCount = events.reduce((s, e) => {
-          const isWheeze = e.wheeze === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('wheeze'));
-          return s + (isWheeze ? 1 : 0);
+          const numericWheeze = typeof e.wheeze === 'number' ? e.wheeze : 0;
+          const labelWheeze = (e.prediction_label && e.prediction_label.toLowerCase().includes('wheeze')) ? 1 : 0;
+          return s + Math.max(numericWheeze, labelWheeze);
         }, 0);
         coughCount = events.reduce((s, e) => {
-          const isCough = e.cough === 1 || (e.prediction_label && e.prediction_label.toLowerCase().includes('cough'));
-          return s + (isCough ? 1 : 0);
+          const numericCough = typeof e.cough === 'number' ? e.cough : 0;
+          const labelCough = (e.prediction_label && e.prediction_label.toLowerCase().includes('cough')) ? 1 : 0;
+          return s + Math.max(numericCough, labelCough);
         }, 0);
       }
 
