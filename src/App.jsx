@@ -1010,7 +1010,24 @@ const App = () => {
       {/* Visual background decorative glows */}
       <div className={`fixed -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] pointer-events-none transition-opacity duration-700 ${theme === 'light' ? 'bg-blue-600/5 opacity-100' : 'bg-blue-400/10 opacity-60'}`} />
       
-      {/* Alert Banner */}
+      {/* Emergency Global Alert Bar (Persistent) */}
+      {sensors?.physioRisk === 'high' && (
+        <div className="fixed top-0 left-0 right-0 z-[200] bg-rose-600 text-white flex items-center justify-center gap-4 py-2 px-6 shadow-lg border-b border-rose-400 animate-in slide-in-from-top-full duration-500">
+          <div className="flex items-center gap-2 animate-pulse">
+            <AlertTriangle size={18} fill="currentColor" className="text-white" />
+            <span className="text-[11px] font-black uppercase tracking-[0.2em]">Medical Emergency: High Physiological Risk Detected</span>
+          </div>
+          <div className="h-4 w-px bg-white/20"></div>
+          <button 
+            onClick={() => setActiveTab('risk')}
+            className="text-[10px] font-black uppercase tracking-widest underline underline-offset-4 hover:text-white/80 transition-colors"
+          >
+            Review Assessment
+          </button>
+        </div>
+      )}
+
+      {/* Temporary Popup Alert Banner (Dismissible) */}
       {isAlertVisible && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4 animate-in slide-in-from-top-4 duration-300">
           <div className={`p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 border-2 transition-all ${
@@ -1098,8 +1115,8 @@ const App = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="pl-20 lg:pl-72 min-h-screen transition-all duration-300">
-        <header className={`h-24 backdrop-blur-md border-b sticky top-0 z-40 px-10 flex items-center justify-between ${themeClasses.header}`}>
+      <main className={`pl-20 lg:pl-72 min-h-screen transition-all duration-300 ${sensors?.physioRisk === 'high' ? 'pt-8' : ''}`}>
+        <header className={`h-24 backdrop-blur-md border-b sticky top-0 z-40 px-10 flex items-center justify-between ${themeClasses.header} ${sensors?.physioRisk === 'high' ? 'top-8' : 'top-0'}`}>
           <div className="animate-in fade-in slide-in-from-left-4 duration-700 flex items-center gap-6">
             <div>
               <h1 className={`text-2xl font-black tracking-tight ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>
