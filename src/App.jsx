@@ -559,7 +559,18 @@ const App = () => {
         rawBR = rawHeartRate > 0 ? Math.max(12, Math.min(45, Math.round(rawHeartRate / 4.5))) : 16;
       }
 
-      const fusionResult = hybridFusion(wheezeCount, coughCount, rawSpo2 > 0 ? rawSpo2 : 98, rawBR, patient.age);
+      // Apply motion status to RAW fusion logic
+      const currentMotion = isMotionOverridden ? 'STEADY' : (motionStatus || 'STEADY');
+      const fusionResult = hybridFusion(
+        wheezeCount, 
+        coughCount, 
+        rawSpo2 > 0 ? rawSpo2 : 98, 
+        rawBR, 
+        patient.age,
+        null, // No baseline for RAW tab
+        null, 
+        currentMotion
+      );
 
       const temperature = latest.temperature || null;
       const humidity    = latest.humidity    || null;
@@ -1550,7 +1561,48 @@ const App = () => {
                     <h3 className={`text-xl font-black tracking-tight ${theme === 'light' ? 'text-[#1e3a8a]' : 'text-white'}`}>Raw Physical Status</h3>
                     <p className={`text-xs font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Uncalibrated physiological risk</p>
                   </div>
-                  <RiskBadge level={rawSensors.physioRisk} theme={theme} />
+                  <div className="flex flex-col items-end">
+                    <RiskBadge level={rawSensors.physioRisk} theme={theme} />
+                    <div className={`mt-2 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${
+                      motionStatus === 'STEADY' ? 'text-emerald-500' : 
+                      motionStatus === 'WALKING' ? 'text-amber-500' : 'text-rose-500'
+                    }`}>
+                      <span>Status: {motionStatus} {isMotionOverridden && '(Manual)'}</span>
+                      {(motionStatus !== 'STEADY' || isMotionOverridden) && (
+                        <button 
+                          onClick={() => {
+                            const newOverride = !isMotionOverridden;
+                            setIsMotionOverridden(newOverride);
+                            if (newOverride) {
+                              setMotionStatus('STEADY');
+                              setAlertsEnabled(true);
+                              setCooldownRemaining(0);
+                            }
+                          }}
+                          className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase transition-all active:scale-95 ${
+                            isMotionOverridden 
+                              ? 'bg-emerald-500 text-white shadow-sm' 
+                              : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                          }`}
+                        >
+                          {isMotionOverridden ? 'Release' : 'Force Steady'}
+                        </button>
+                      )}
+                    </div>
+                    {!alertsEnabled && (
+                      <div className="mt-1 flex flex-col items-end gap-1">
+                        <span className="text-[9px] font-black text-rose-400 animate-pulse uppercase tracking-wider">Alerts Paused (Motion)</span>
+                        {cooldownRemaining > 0 && (
+                           <button 
+                             onClick={handleSkipCooldown}
+                             className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase bg-rose-500 text-white active:scale-95 transition-all"
+                           >
+                             Skip {Math.floor(cooldownRemaining / 60)}:{(cooldownRemaining % 60).toString().padStart(2, '0')}
+                           </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-6 relative z-10">
