@@ -215,6 +215,12 @@ const App = () => {
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
+  const handleSkipCooldown = () => {
+    setAlertsEnabled(true);
+    setCooldownRemaining(0);
+    setIntenseMotionEndedAt(null);
+  };
+
   // --- CALIBRATION (PERSONAL BEST) ---  // Clinical Calibration States
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [calibrationTimer, setCalibrationTimer] = useState(0);
@@ -1096,6 +1102,17 @@ const App = () => {
                   {isLivePaused ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" />}
                   {isLivePaused ? 'Live Paused' : 'Live Monitoring'}
                 </button>
+
+                {/* COOLDOWN SKIP BUTTON */}
+                {!alertsEnabled && cooldownRemaining > 0 && (
+                  <button 
+                    onClick={handleSkipCooldown}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-500 text-white border border-rose-400 shadow-lg shadow-rose-500/20 animate-pulse transition-all active:scale-95"
+                  >
+                    <Zap size={10} fill="currentColor" /> Skip Cooldown ({Math.floor(cooldownRemaining / 60)}:{(cooldownRemaining % 60).toString().padStart(2, '0')})
+                  </button>
+                )}
+
                 <span className={`text-[11px] font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Sync: {lastSync}</span>
               </div>
             </div>
