@@ -259,6 +259,31 @@ const App = () => {
   const [medicationTimer, setMedicationTimer] = useState(0);
   const [treatmentStatus, setTreatmentStatus] = useState(null); // 'monitoring', 'resolved', 'escalated'
   
+  // --- HIGH RISK ALERTS (SOUND & POP-UP) ---
+  const prevRiskRef = useRef('safe');
+  const alertAudio = useRef(new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_731422ab69.mp3')); // Medical Alert Sound
+  
+  useEffect(() => {
+    const currentRisk = sensors?.physioRisk || 'safe';
+    
+    // If alerts are disabled (e.g. child is RUNNING), clear existing high risk popups
+    if (!alertsEnabled && isAlertVisible && sensors.physioRisk === 'high') {
+      setIsAlertVisible(false);
+    }
+
+    // Trigger only on transition TO high risk, and ONLY if alerts are enabled
+    if (currentRisk === 'high' && prevRiskRef.current !== 'high' && alertsEnabled) {
+      setAlertMsg("CRITICAL ALERT: High physiological risk detected! Check child immediately.");
+      setIsAlertVisible(true);
+      
+      // Play alert sound
+      alertAudio.current.currentTime = 0;
+      alertAudio.current.play().catch(e => console.error("Sound play failed (requires user interaction first):", e));
+    }
+    
+    prevRiskRef.current = currentRisk;
+  }, [sensors?.physioRisk, alertsEnabled]);
+
   // Medication Observation Window Logic
   useEffect(() => {
     if (!medicationGivenAt || treatmentStatus === 'resolved' || treatmentStatus === 'escalated') return;
@@ -932,14 +957,23 @@ const App = () => {
       {/* Alert Banner */}
       {isAlertVisible && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4 animate-in slide-in-from-top-4 duration-300">
-          <div className="bg-rose-500 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 border-2 border-rose-400">
+          <div className={`p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 border-2 transition-all ${
+            sensors?.physioRisk === 'high' 
+              ? 'bg-rose-600 text-white border-rose-400 ring-4 ring-rose-500/20 animate-pulse' 
+              : 'bg-rose-500 text-white border-rose-400'
+          }`}>
             <div className="flex items-center gap-4">
-              <AlertTriangle className="flex-shrink-0 animate-pulse" />
-              <p className="font-bold text-sm leading-tight">{alertMsg}</p>
+              <div className={`p-2 rounded-full ${sensors?.physioRisk === 'high' ? 'bg-white/20' : ''}`}>
+                <AlertTriangle className="flex-shrink-0 animate-bounce" />
+              </div>
+              <div>
+                {sensors?.physioRisk === 'high' && <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-0.5">Critical Emergency</p>}
+                <p className="font-bold text-sm leading-tight">{alertMsg}</p>
+              </div>
             </div>
             <button 
               onClick={() => setIsAlertVisible(false)}
-              className="p-1.5 hover:bg-rose-600 rounded-lg transition-colors flex-shrink-0"
+              className="p-1.5 hover:bg-black/20 rounded-lg transition-colors flex-shrink-0"
               title="Dismiss"
             >
               <X size={18} />
