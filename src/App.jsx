@@ -205,6 +205,7 @@ const App = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTestingMode, setIsTestingMode] = useState(false);
+  const [isLivePaused, setIsLivePaused] = useState(false);
 
   // --- MOTION & SMART ALERTS ---
   const [motionStatus, setMotionStatus] = useState('STEADY');
@@ -588,7 +589,36 @@ const App = () => {
     } catch (err) {
       console.error('❌ Error fetching raw sensor data:', err);
     }
-  }, [selectedPatientId, patients, isTestingMode, recordForPatient]);
+  }, [selectedPatientId, patients, isTestingMode, isLivePaused, recordForPatient]);
+
+  const clearAllTestData = async () => {
+    if (!window.confirm("⚠️ DANGER: This will permanently delete ALL physiological and motion data for the active device in Supabase. Proceed?")) return;
+    
+    try {
+      setLastSync("Wiping Data...");
+      const patient = patients.find(p => p.id === selectedPatientId) || patients[0];
+      const deviceId = sensors.device_id || 'DEMO-DEVICE';
+      const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+
+      // Delete from both tables
+      const [res1, res2] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?device_id=eq.${deviceId}`, { method: 'DELETE', headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/accel_values?device_id=eq.${deviceId}`, { method: 'DELETE', headers })
+      ]);
+
+      if (res1.ok && res2.ok) {
+        alert("✅ Success: All test data for this device has been cleared.");
+        fetchLatestSensorData(); // Refresh to clear UI
+      } else {
+        throw new Error("Failed to clear data");
+      }
+    } catch (err) {
+      console.error("Error resetting DB:", err);
+      alert("❌ Error: Failed to wipe database.");
+    } finally {
+      setLastSync(new Date().toLocaleTimeString());
+    }
+  };
 
   // Fetch latest sensor data from Supabase
   const fetchLatestSensorData = useCallback(async () => {
@@ -831,10 +861,12 @@ const App = () => {
     fetchRawSensorData();
     
     const timer = setInterval(() => {
-      fetchLatestSensorData();
-      fetchRawSensorData();
-      // Proactively associate any untagged background data with the active patient
-      recordForPatient();
+      if (!isLivePaused) {
+        fetchLatestSensorData();
+        fetchRawSensorData();
+        // Proactively associate any untagged background data with the active patient
+        recordForPatient();
+      }
     }, 5000);
     
     const vitalsTimer = setInterval(() => {
@@ -845,7 +877,7 @@ const App = () => {
       clearInterval(timer);
       clearInterval(vitalsTimer);
     };
-  }, [fetchLatestSensorData, fetch24HourVitals, fetchRawSensorData]);
+  }, [fetchLatestSensorData, fetch24HourVitals, fetchRawSensorData, isLivePaused]);
 
   // Load historical data only when the history tab is open and a patient is selected
   useEffect(() => {
@@ -1050,10 +1082,18 @@ const App = () => {
                 {activeTab === 'dashboard' ? 'Safety Dashboard' : activeTab === 'history' ? 'Analytical Logs' : activeTab === 'patients' ? 'Patient Management' : 'System Settings'}
               </h1>
               <div className="flex items-center gap-3 mt-1">
-                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${theme === 'light' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-emerald-900/20 text-emerald-400 border-emerald-900/40'}`}>
-                  <CheckCircle2 size={10} /> Live Monitoring
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Last Successful Sync: {lastSync}</span>
+                <button 
+                  onClick={() => setIsLivePaused(!isLivePaused)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+                    isLivePaused 
+                      ? 'bg-amber-500 text-white border-amber-400 shadow-lg shadow-amber-500/20' 
+                      : theme === 'light' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-emerald-900/20 text-emerald-400 border-emerald-900/40'
+                  }`}
+                >
+                  {isLivePaused ? <Pause size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" />}
+                  {isLivePaused ? 'Live Paused' : 'Live Monitoring'}
+                </button>
+                <span className={`text-[11px] font-bold uppercase tracking-widest ${themeClasses.subtext}`}>Sync: {lastSync}</span>
               </div>
             </div>
             
@@ -1720,6 +1760,23 @@ const App = () => {
                   </div>
                 </div>
                 )}
+
+                {/* Database Management */}
+                <div className="space-y-4 pt-6 border-t border-slate-700/10">
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${themeClasses.subtext}`}>Database Management</p>
+                  <div className={`p-6 rounded-3xl border flex items-center justify-between ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-[#1e293b] border-slate-700'}`}>
+                    <div>
+                        <p className="font-bold text-sm text-rose-500">Wipe All Test Data</p>
+                        <p className={`text-xs ${themeClasses.subtext}`}>Permanently delete all sensor & accel rows for this device.</p>
+                    </div>
+                    <button 
+                      onClick={clearAllTestData}
+                      className="px-4 py-2 font-bold text-xs uppercase tracking-wide rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 active:scale-95"
+                    >
+                      Reset Database
+                    </button>
+                  </div>
+                </div>
 
                 {/* Account Settings */}
                 <div className="space-y-4 pt-6 border-t border-slate-700/10">
