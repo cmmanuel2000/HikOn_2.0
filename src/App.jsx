@@ -214,6 +214,7 @@ const App = () => {
   const [intenseMotionEndedAt, setIntenseMotionEndedAt] = useState(null); // Timestamp when 'MOVING' stopped
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [isMotionOverridden, setIsMotionOverridden] = useState(false);
 
   const handleSkipCooldown = () => {
     setAlertsEnabled(true);
@@ -712,7 +713,8 @@ const App = () => {
       
       // Calculate breathing rate and motion status from accelerometer data
       const brResult = await calculateBreathingRate();
-      const motion = brResult.motionStatus || 'STEADY';
+      const calculatedMotion = brResult.motionStatus || 'STEADY';
+      const motion = isMotionOverridden ? 'STEADY' : calculatedMotion;
       const patientAtRest = brResult.isAtRest;
       
       setMotionStatus(motion);
@@ -1199,11 +1201,31 @@ const App = () => {
                     theme={theme} 
                     label={!alertsEnabled ? (motionStatus === 'RUNNING' ? 'MOTION' : 'STABILIZING') : null}
                   />
-                  <div className={`mt-2 text-[10px] font-black uppercase tracking-widest ${
+                  <div className={`mt-2 text-[10px] font-black uppercase tracking-widest flex items-center justify-between ${
                     motionStatus === 'STEADY' ? 'text-emerald-500' : 
                     motionStatus === 'WALKING' ? 'text-amber-500' : 'text-rose-500'
                   }`}>
-                    Status: {motionStatus}
+                    <span>Status: {motionStatus} {isMotionOverridden && '(Manual)'}</span>
+                    {(motionStatus !== 'STEADY' || isMotionOverridden) && (
+                      <button 
+                        onClick={() => {
+                          const newOverride = !isMotionOverridden;
+                          setIsMotionOverridden(newOverride);
+                          if (newOverride) {
+                            setMotionStatus('STEADY');
+                            setAlertsEnabled(true);
+                            setCooldownRemaining(0);
+                          }
+                        }}
+                        className={`ml-2 px-2 py-0.5 rounded-md text-[8px] font-black uppercase transition-all active:scale-95 ${
+                          isMotionOverridden 
+                            ? 'bg-emerald-500 text-white shadow-sm' 
+                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                        }`}
+                      >
+                        {isMotionOverridden ? 'Release' : 'Force Steady'}
+                      </button>
+                    )}
                   </div>
                   {!alertsEnabled && cooldownRemaining > 0 && (
                     <div className="mt-1 text-[9px] font-black text-rose-400 animate-pulse">
