@@ -41,7 +41,9 @@ import {
   TrendingDown,
   Minus,
   Clock,
-  X
+  X,
+  Play,
+  Pause
 } from 'lucide-react';
 
 // --- SUPABASE CONFIG ---
@@ -262,7 +264,8 @@ const App = () => {
   
   // --- HIGH RISK ALERTS (SOUND & POP-UP) ---
   const prevRiskRef = useRef('safe');
-  const alertAudio = useRef(new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_731422ab69.mp3')); // Medical Alert Sound
+  // Using a more reliable notification sound URL
+  const alertAudio = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
   
   useEffect(() => {
     const currentRisk = sensors?.physioRisk || 'safe';
