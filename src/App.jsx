@@ -522,7 +522,7 @@ const App = () => {
       const [latestRes, eventsRes, calibRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?or=(patient_id.eq.${patient.patientId},patient_id.is.null)&order=created_at.desc&limit=1`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}&or=(patient_id.eq.${patient.patientId},patient_id.is.null)&select=cough,wheeze,prediction_label`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?order=created_at.desc&limit=1`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?order=created_at.desc&limit=10`, { headers })
       ]);
 
       if (!latestRes.ok) return;
@@ -530,12 +530,21 @@ const App = () => {
       if (data.length === 0) return;
       const latest = data[0];
 
-      // Get latest high-frequency vitals from calibration table
+      // Get 10-second rolling average vitals from calibration table
       let calibVitals = { spo2: null, heart_rate: null };
       if (calibRes.ok) {
         const calibData = await calibRes.json();
         if (calibData.length > 0) {
-          calibVitals = calibData[0];
+          // Average the last 10 samples for stability
+          const validSpo2 = calibData.map(d => parseFloat(d.spo2)).filter(v => v > 0);
+          const validHR   = calibData.map(d => parseFloat(d.heart_rate)).filter(v => v > 0);
+          
+          if (validSpo2.length > 0) {
+            calibVitals.spo2 = validSpo2.reduce((a, b) => a + b, 0) / validSpo2.length;
+          }
+          if (validHR.length > 0) {
+            calibVitals.heart_rate = validHR.reduce((a, b) => a + b, 0) / validHR.length;
+          }
         }
       }
 
@@ -667,11 +676,11 @@ const App = () => {
       todayStart.setHours(0, 0, 0, 0);
       const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
-      // Fire the fetches in parallel (Monitoring data + Symptoms + Real-time vitals)
+      // Fire the fetches in parallel (Monitoring data + Symptoms + 10s Rolling Vitals)
       const [latestRes, eventsRes, calibRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?${patientFilter}order=created_at.desc&limit=1`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}${patientFilterWithAmp}&select=cough,wheeze,prediction_label`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?order=created_at.desc&limit=1`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?order=created_at.desc&limit=10`, { headers })
       ]);
 
       if (!latestRes.ok) {
@@ -685,12 +694,21 @@ const App = () => {
       }
       const latest = data[0];
       
-      // Get latest high-frequency vitals from calibration table
+      // Get 10-second rolling average vitals from calibration table
       let calibVitals = { spo2: null, heart_rate: null };
       if (calibRes.ok) {
         const calibData = await calibRes.json();
         if (calibData.length > 0) {
-          calibVitals = calibData[0];
+          // Average the last 10 samples for stability
+          const validSpo2 = calibData.map(d => parseFloat(d.spo2)).filter(v => v > 0);
+          const validHR   = calibData.map(d => parseFloat(d.heart_rate)).filter(v => v > 0);
+          
+          if (validSpo2.length > 0) {
+            calibVitals.spo2 = validSpo2.reduce((a, b) => a + b, 0) / validSpo2.length;
+          }
+          if (validHR.length > 0) {
+            calibVitals.heart_rate = validHR.reduce((a, b) => a + b, 0) / validHR.length;
+          }
         }
       }
 
@@ -701,7 +719,7 @@ const App = () => {
       }
       
       console.log('📊 Latest snapshot data:', latest);
-      console.log('💓 Real-time vitals data:', calibVitals);
+      console.log('💓 10s Rolling Vitals:', calibVitals);
 
       let wheezeCount = 0;
       let coughCount = 0;
