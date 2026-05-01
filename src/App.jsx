@@ -224,7 +224,7 @@ const App = () => {
 
   // --- CALIBRATION (PERSONAL BEST) ---  // Clinical Calibration States
   const [isCalibrating, setIsCalibrating] = useState(false);
-  const [calibrationTimer, setCalibrationTimer] = useState(0);
+  const [calibrationTimer, setCalibrationTimer] = useState(-1);
   const [calibrationSamples, setCalibrationSamples] = useState([]);
   const [brSamples, setBrSamples] = useState([]);
 
