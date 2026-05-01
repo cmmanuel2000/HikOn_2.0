@@ -519,34 +519,16 @@ const App = () => {
       todayStart.setHours(0, 0, 0, 0);
       const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
-      const [latestRes, eventsRes, calibRes] = await Promise.all([
+      const [latestRes, eventsRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?or=(patient_id.eq.${patient.patientId},patient_id.is.null)&order=created_at.desc&limit=1`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}&or=(patient_id.eq.${patient.patientId},patient_id.is.null)&select=cough,wheeze,prediction_label`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?order=created_at.desc&limit=10`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}&or=(patient_id.eq.${patient.patientId},patient_id.is.null)&select=cough,wheeze,prediction_label`, { headers })
       ]);
+
 
       if (!latestRes.ok) return;
       const data = await latestRes.json();
       if (data.length === 0) return;
       const latest = data[0];
-
-      // Get 10-second rolling average vitals from calibration table
-      let calibVitals = { spo2: null, heart_rate: null };
-      if (calibRes.ok) {
-        const calibData = await calibRes.json();
-        if (calibData.length > 0) {
-          // Average the last 10 samples for stability
-          const validSpo2 = calibData.map(d => parseFloat(d.spo2)).filter(v => v > 0);
-          const validHR   = calibData.map(d => parseFloat(d.heart_rate)).filter(v => v > 0);
-          
-          if (validSpo2.length > 0) {
-            calibVitals.spo2 = validSpo2.reduce((a, b) => a + b, 0) / validSpo2.length;
-          }
-          if (validHR.length > 0) {
-            calibVitals.heart_rate = validHR.reduce((a, b) => a + b, 0) / validHR.length;
-          }
-        }
-      }
 
       // Auto-tag if untagged data is found
       if (latest.patient_id === null) {
@@ -570,9 +552,8 @@ const App = () => {
 
 
       // Use raw values — NO calibration applied
-      // Use high-frequency vitals if available, otherwise fallback to sensor snapshot
-      const rawSpo2      = calibVitals.spo2       || latest.spo2        || 0;
-      const rawHeartRate = calibVitals.heart_rate || latest.heart_rate  || 0;
+      const rawSpo2      = latest.spo2        || 0;
+      const rawHeartRate = latest.heart_rate  || 0;
       let   rawBR        = latest.br_rate;
       if (rawBR === null || rawBR === undefined) {
         rawBR = rawHeartRate > 0 ? Math.max(12, Math.min(45, Math.round(rawHeartRate / 4.5))) : 16;
@@ -676,11 +657,10 @@ const App = () => {
       todayStart.setHours(0, 0, 0, 0);
       const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
-      // Fire the fetches in parallel (Monitoring data + Symptoms + 10s Rolling Vitals)
-      const [latestRes, eventsRes, calibRes] = await Promise.all([
+      // Fire the two display fetches in parallel
+      const [latestRes, eventsRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?${patientFilter}order=created_at.desc&limit=1`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}${patientFilterWithAmp}&select=cough,wheeze,prediction_label`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/spo2_calibration?order=created_at.desc&limit=10`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/s3_sensor_data?created_at=gte.${todayStart.toISOString()}${patientFilterWithAmp}&select=cough,wheeze,prediction_label`, { headers })
       ]);
 
       if (!latestRes.ok) {
@@ -694,32 +674,13 @@ const App = () => {
       }
       const latest = data[0];
       
-      // Get 10-second rolling average vitals from calibration table
-      let calibVitals = { spo2: null, heart_rate: null };
-      if (calibRes.ok) {
-        const calibData = await calibRes.json();
-        if (calibData.length > 0) {
-          // Average the last 10 samples for stability
-          const validSpo2 = calibData.map(d => parseFloat(d.spo2)).filter(v => v > 0);
-          const validHR   = calibData.map(d => parseFloat(d.heart_rate)).filter(v => v > 0);
-          
-          if (validSpo2.length > 0) {
-            calibVitals.spo2 = validSpo2.reduce((a, b) => a + b, 0) / validSpo2.length;
-          }
-          if (validHR.length > 0) {
-            calibVitals.heart_rate = validHR.reduce((a, b) => a + b, 0) / validHR.length;
-          }
-        }
-      }
-
       // Auto-tag untagged records to the current patient
       if (latest.patient_id === null) {
         console.log("🔄 Auto-recording untagged data for patient:", patient.patientId);
         recordForPatient();
       }
       
-      console.log('📊 Latest snapshot data:', latest);
-      console.log('💓 10s Rolling Vitals:', calibVitals);
+      console.log('📊 Latest data:', latest);
 
       let wheezeCount = 0;
       let coughCount = 0;
@@ -758,9 +719,8 @@ const App = () => {
 
 
       // Apply chest sensor calibration
-      // Apply chest sensor calibration (Source from high-frequency table first)
-      const spo2 = calibrateSpO2(calibVitals.spo2 || latest.spo2 || 0) || 0;
-      const heartRate = calibrateHeartRate(calibVitals.heart_rate || latest.heart_rate || 0) || 0;
+      const spo2 = calibrateSpO2(latest.spo2 || 0) || 0;
+      const heartRate = calibrateHeartRate(latest.heart_rate || 0) || 0;
       
       // Calculate breathing rate and motion status from accelerometer data
       const brResult = await calculateBreathingRate();

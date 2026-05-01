@@ -12,14 +12,11 @@
  */
 
 /**
- * Apply clinical linear regression to SpO2 reading.
- * Refined based on database samples (Raw 105.8 vs Manual 99) -> 0.935x factor.
+ * Return raw SpO2 reading with no calibration offset.
  */
 export function calibrateSpO2(rawSpO2) {
   if (!rawSpO2 || rawSpO2 <= 0) return null;
-  // Scale down overshoot and cap at 100%
-  const calibrated = rawSpO2 * 0.935;
-  return Math.min(100, Math.round(calibrated * 10) / 10); 
+  return rawSpO2; 
 }
 
 // --- Heart Rate Calibration (Moving Median Filter) ---
@@ -48,10 +45,9 @@ export function calibrateHeartRate(rawHR) {
   }
   
   // Need at least 3 readings for a meaningful median
-  const median = getMedian(hrBuffer);
+  if (hrBuffer.length < 3) return Math.round(rawHR);
   
-  // Apply refined clinical correction (Raw 103.5 vs Manual 102 -> 0.985x factor)
-  return Math.round(median * 0.985);
+  return getMedian(hrBuffer);
 }
 
 /**
