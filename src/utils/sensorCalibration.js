@@ -16,7 +16,7 @@
  */
 export function calibrateSpO2(rawSpO2) {
   if (!rawSpO2 || rawSpO2 <= 0) return null;
-  return rawSpO2; 
+  return Math.min(Number(rawSpO2), 99); 
 }
 
 // --- Heart Rate Calibration (Moving Median Filter) ---
