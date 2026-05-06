@@ -400,7 +400,7 @@ const App = () => {
               const latestSpo2 = parseFloat(latest.spo2);
               const latestBr = parseFloat(latest.br_rate);
 
-              if (latestSpo2 > 80 && calibrationTimer % 10 === 0) {
+              if (latestSpo2 > 80) {
                 setCalibrationSamples(prev => [...prev, latestSpo2]);
               }
               if (latestBr > 0) {
