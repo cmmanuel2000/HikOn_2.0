@@ -4,22 +4,18 @@
  * Calculates breathing rate from accelerometer data stored in the accel_values table.
  * Uses a dual-axis calibrated zero-crossing algorithm for both RESTING and ACTIVE states.
  * 
- * NOTE: Supabase accel_values stores data in g units (÷9.81 from m/s²).
- *       STEADY/WALKING thresholds are in g. Serial monitor logs are in m/s².
- * 
- * Recalibrated via linear regression on 3 breath-count trials:
- *   Trial 1: Manual=23 bpm, avg ZC_Y=5.00 → Predicted=23 ✅
- *   Trial 2: Manual=20 bpm, avg ZC_Y=4.20 → Predicted=20 ✅
- *   Trial 3: Manual=22 bpm, avg ZC_Y=4.67 → Predicted=22 ✅
+ * Calibrated against manual breath counts:
+ *   Dwayne:    Rest 21, Active 27
+ *   Kim:       Rest 22, Active 29
+ *   Miguelito: Rest 32, Active 29
  */
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
 // Calibration constants for RESTING state (Using Y-Axis)
-// Recalibrated 2026-05-06 via linear regression on breath-count trials
-const REST_ZC_SLOPE = 3.78;
-const REST_ZC_INTERCEPT = 4.17;
+const REST_ZC_SLOPE = 9.21;
+const REST_ZC_INTERCEPT = 0.97;
 
 // Calibration constants for ACTIVE state (Using X-Axis)
 const ACTIVE_ZC_SLOPE = 3.5;
